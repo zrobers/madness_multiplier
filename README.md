@@ -1,4 +1,4 @@
-# 🏀 Madness Multiplier
+# Madness Multiplier
 
 Madness Multiplier is a database-backed web application that reimagines the excitement of March Madness through a structured, point-based wagering system.
 
@@ -6,16 +6,16 @@ Users can place wagers with fake money on NCAA tournament games, track leaderboa
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 
 Before you begin, make sure you have the following installed:
 
 - **Docker Desktop** (latest version)  
-  👉 [Download here](https://www.docker.com/get-started)
+  [Download here](https://www.docker.com/get-started)
 - **Git**  
-  👉 [Install Git](https://git-scm.com/downloads)
+  [Install Git](https://git-scm.com/downloads)
 - *(Optional)* Node.js 18+ if you plan to run backend/frontend locally without Docker
 
 ---
@@ -55,7 +55,7 @@ DEV_AUTH=true
 
 **Do not commit your .env file.** The `.env.example` should remain in version control as a reference for teammates. This is done by default by .gitignore
 
-### 4. Run the Project with Docker 🐳
+### 4. Run the Project with Docker
 
 From the project root:
 
