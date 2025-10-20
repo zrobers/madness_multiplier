@@ -1,0 +1,78 @@
+export const leaderboard = [
+  { user: "Nathaniel Corey", initials: "NDC", points: 6382.101888 },
+  { user: "Ryyan Siddiqi", initials: "RMS", points: 722.90304 },
+  { user: "Aidan Gallagher", initials: "AG", points: 309.6576 },
+  { user: "Wiley Thornton", initials: "WJT", points: 30.011904 },
+  { user: "Alex Christ", initials: "ACC", points: 0.3368 },
+  { user: "Kyle Black", initials: "KB", points: 0.032768 },
+  { user: "Andrew Spong", initials: "ACS", points: 0 },
+  { user: "Brian Yoon", initials: "BSY", points: 0 },
+  { user: "Charlie Konen", initials: "CTK", points: 0 },
+  { user: "Davis Featherstone", initials: "DF", points: 0 },
+  { user: "Eli Newman", initials: "EN", points: 0 },
+  { user: "Gavin Burns", initials: "GRB", points: 0 },
+  { user: "Hunter Newsome", initials: "HZN", points: 0 },
+  { user: "Kiran Pathy", initials: "KP", points: 0 },
+  { user: "Riley Cusick", initials: "RC", points: 0 },
+  { user: "Ryan Yu", initials: "RY", points: 0 },
+];
+
+// --- Round of 64 sample (replace/expand with the complete slate) ---
+export const gamesRoundOf64 = [
+  {
+    id: "G1",
+    tipET: "12:15 PM ET",
+    network: "CBS",
+    away: { seed: 16, name: "Stetson", record: "22-12", abbr: "STET" },
+    home: { seed: 1, name: "UConn", record: "31-3", abbr: "UCONN" },
+  },
+  {
+    id: "G2",
+    tipET: "2:00 PM ET",
+    network: "TNT",
+    away: { seed: 15, name: "Wagner", record: "16-15", abbr: "WAG" },
+    home: { seed: 2, name: "North Carolina", record: "27-7", abbr: "UNC" },
+  },
+  {
+    id: "G3",
+    tipET: "2:45 PM ET",
+    network: "TBS",
+    away: { seed: 16, name: "Grambling St.", record: "20-14", abbr: "GRAM" },
+    home: { seed: 1, name: "Purdue", record: "29-4", abbr: "PUR" },
+  },
+  {
+    id: "G4",
+    tipET: "4:30 PM ET",
+    network: "truTV",
+    away: { seed: 13, name: "Vermont", record: "28-6", abbr: "UVM" },
+    home: { seed: 4, name: "Duke", record: "26-8", abbr: "DUKE" },
+  },
+  {
+    id: "G5",
+    tipET: "6:50 PM ET",
+    network: "TNT",
+    away: { seed: 15, name: "Long Beach St.", record: "21-14", abbr: "LBSU" },
+    home: { seed: 2, name: "Arizona", record: "27-8", abbr: "ARIZ" },
+  },
+  {
+    id: "G6",
+    tipET: "7:10 PM ET",
+    network: "CBS",
+    away: { seed: 13, name: "Colgate", record: "25-9", abbr: "COLG" },
+    home: { seed: 3, name: "Baylor", record: "23-10", abbr: "BU" },
+  },
+  {
+    id: "G7",
+    tipET: "9:10 PM ET",
+    network: "TBS",
+    away: { seed: 13, name: "Samford", record: "29-5", abbr: "SAM" },
+    home: { seed: 4, name: "Kansas", record: "22-10", abbr: "KU" },
+  },
+  {
+    id: "G8",
+    tipET: "9:40 PM ET",
+    network: "CBS",
+    away: { seed: 12, name: "McNeese", record: "30-3", abbr: "MCN" },
+    home: { seed: 5, name: "Gonzaga", record: "25-7", abbr: "GONZ" },
+  },
+];
