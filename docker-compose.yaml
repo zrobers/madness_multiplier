@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: postgres:15
@@ -10,6 +12,13 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Mount ONLY the db init folder (contains 00-run.sh, create.sql, load.sql)
+      - ./backend/db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d madness"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -20,22 +29,27 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - pgadmin-data:/var/lib/pgadmin
 
   backend:
     image: node:20-alpine
     working_dir: /usr/src/app
-    command: sh -c "npm ci && npm run dev"   # or npm start
+    command: sh -c "npm install && npm run dev"   
     volumes:
       - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
       - "4000:4000"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/madness
+      - DEV_AUTH=true
+      - PORT=4000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   frontend:
     image: node:20-alpine
@@ -43,12 +57,14 @@ services:
     command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
     volumes:
       - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
       - "5173:5173"
     environment:
       - VITE_API_BASE=http://backend:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
 volumes:
   pgdata:
