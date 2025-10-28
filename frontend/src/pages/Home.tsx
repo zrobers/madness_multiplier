@@ -4,6 +4,7 @@ import GameData from "../components/GameData";
 import Bracket from "../components/Bracket";
 //import logoImage from "../assets/mm_logo_v1.jpg";
 import { useNavigate } from "react-router-dom";
+import Pools from "../components/Pools";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -16,15 +17,8 @@ export default function HomePage() {
           <button className="tab" disabled>View Picks</button>
           <button className="tab" disabled>Submit Picks</button>
           <button className="tab" disabled>How It Works</button>
-          
         </header>
-
-        <button 
-          className="loginButton"
-          onClick={() => navigate("/login")}
-        >
-          Login / Register
-        </button>
+        <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
 
       </div>
 
@@ -33,9 +27,15 @@ export default function HomePage() {
       </section>
 
       <section className="belowGrid">
-        <aside className="left"><Leaderboard /></aside>
+        <aside className="left">
+          <Leaderboard />
+          <div style={{ height: 12 }} />
+          <Pools />
+        </aside>
         <div className="centerSpacer" aria-hidden />
-        <aside className="right"><Bracket /></aside>
+        <aside className="right">
+          <Bracket />
+        </aside>
       </section>
     </div>
   );
