@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function RegisterForm() {
@@ -9,28 +8,49 @@ export default function RegisterForm() {
   const [password, setPassword] = useState("");
   const [handle, setHandle] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      // Create user in Firebase
+      // 1️⃣ Create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
-      // Send POST request to backend to insert into users table
-      await axios.post(`${import.meta.env.VITE_API_BASE}/api/auth/register`, {
-        auth0_sub: firebaseUser.uid,
-        handle,
-        email,
+      // 2️⃣ Send POST request to backend to insert into Postgres
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auth0_sub: firebaseUser.uid,
+          handle,
+          email,
+        }),
       });
 
-      setError("");
-      navigate("/");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to register user");
+      }
+
+      const data = await response.json();
+      console.log("Registered user:", data);
+
+      // 3️⃣ Clear form and redirect
+      setEmail("");
+      setPassword("");
+      setHandle("");
+      navigate("/"); // redirect to homepage
 
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,24 +61,26 @@ export default function RegisterForm() {
         type="text"
         placeholder="Handle"
         value={handle}
-        onChange={e => setHandle(e.target.value)}
+        onChange={(e) => setHandle(e.target.value)}
         required
       />
       <input
         type="email"
         placeholder="Email"
         value={email}
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
         required
       />
       <input
         type="password"
         placeholder="Password"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <button type="submit">Register</button>
+      <button type="submit" disabled={loading}>
+        {loading ? "Registering..." : "Register"}
+      </button>
     </form>
   );
 }
