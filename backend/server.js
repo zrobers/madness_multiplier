@@ -4,6 +4,7 @@ import express from "express"; import cors from "cors"; import helmet from "helm
 
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import wagersRoutes from "./routes/wagersRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 app.use(helmet());
@@ -27,6 +28,8 @@ app.use("/api/wagers", (req, res, next) => {
   next();
 }, wagersRoutes);                                       // POST /api/wagers
 
-app.listen(process.env.PORT || 4000, () =>
-  console.log(`API listening on :${process.env.PORT || 4000}`)
+app.use("/api/auth", authRoutes);
+
+app.listen(process.env.PORT || 5000, () =>
+  console.log(`API listening on :${process.env.PORT || 5000}`)
 );
