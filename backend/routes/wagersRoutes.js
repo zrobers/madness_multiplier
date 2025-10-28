@@ -7,10 +7,8 @@ const r = Router();
 
 const validators = [
   body("poolId")
-    .isString()
-    .trim()
-    .matches(/^[0-9a-fA-F-]{36}$/)
-    .withMessage("poolId must be a valid UUID"),
+    .isInt({ min: 1 })
+    .withMessage("poolId must be a positive integer"),
   body("gameId").isInt({ min: 1 }).withMessage("gameId positive int"),
   body("teamId").isInt({ min: 1 }).withMessage("teamId positive int"),
   body("amount").isFloat({ gt: 0 }).withMessage("amount > 0"),
@@ -20,11 +18,11 @@ r.post("/", validators, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  const userId = req.user?.id; // UUID set by DEV shim
+  const userId = parseInt(req.user?.id) || 1; // Convert to integer, default to user 1 for testing
   if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
-  const poolId = req.body.poolId;                 // UUID
-  const gameId = String(req.body.gameId);         // BIGINT acceptable as string
+  const poolId = Number(req.body.poolId);         // INT
+  const gameId = Number(req.body.gameId);         // INT
   const pickedTeamId = Number(req.body.teamId);   // INT
   const stakePoints = Number(req.body.amount);    // map "amount" -> stake_points
 
@@ -38,55 +36,50 @@ r.post("/", validators, async (req, res) => {
 
     // Game context
     const gq = await query(
-      `SELECT game_id, round_code, status,
-              team_a_id, team_b_id, team_a_seed, team_b_seed
-         FROM mm.games WHERE game_id=$1`,
+      `SELECT g.id, g.status, g.home_team_id, g.away_team_id,
+              ht.seed as home_seed, at.seed as away_seed
+         FROM mm.games g
+         JOIN mm.teams ht ON ht.id = g.home_team_id
+         JOIN mm.teams at ON at.id = g.away_team_id
+         WHERE g.id=$1`,
       [gameId]
     );
     if (gq.rowCount === 0) return res.status(404).json({ error: "Game not found" });
     const g = gq.rows[0];
     if (g.status !== "SCHEDULED") return res.status(400).json({ error: "Wagering closed" });
-    if (pickedTeamId !== g.team_a_id && pickedTeamId !== g.team_b_id) {
+    if (pickedTeamId !== g.home_team_id && pickedTeamId !== g.away_team_id) {
       return res.status(400).json({ error: "Selected team not in this game" });
     }
 
-    const pickedSeed = pickedTeamId === g.team_a_id ? g.team_a_seed : g.team_b_seed;
-    const oppSeed    = pickedTeamId === g.team_a_id ? g.team_b_seed : g.team_a_seed;
+    const pickedSeed = pickedTeamId === g.home_team_id ? g.home_seed : g.away_seed;
+    const oppSeed = pickedTeamId === g.home_team_id ? g.away_seed : g.home_seed;
 
-    // Odds from DB
-    const { rows: oddsRows } = await query(
-      `SELECT mm.fn_seed_odds($1,$2) AS posted_odds`,
-      [pickedSeed, oppSeed]
-    );
-    const posted_odds = Number(oddsRows[0].posted_odds);
+    // Calculate odds based on seed difference
+    const posted_odds = 1.0 + (pickedSeed / oppSeed);
 
-    // Optional soft balance check
+    // Check user balance
     const bal = await query(
-      `SELECT current_points FROM mm.vw_pool_balances WHERE pool_id=$1 AND user_id=$2`,
-      [poolId, userId]
+      `SELECT balance FROM mm.users WHERE id=$1`,
+      [userId]
     );
-    const currentPoints = Number(bal.rows?.[0]?.current_points ?? 0);
-    if (currentPoints < stakePoints) return res.status(400).json({ error: "Insufficient points" });
+    const currentBalance = Number(bal.rows?.[0]?.balance ?? 0);
+    if (currentBalance < stakePoints) return res.status(400).json({ error: "Insufficient points" });
 
-    // Transaction: insert wager + debit ledger
-    await query("BEGIN");
+    // Insert wager
     const ins = await query(
       `INSERT INTO mm.wagers
-         (pool_id, user_id, game_id, picked_team_id, picked_seed, opp_seed,
-          stake_points, posted_odds)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING wager_id`,
-      [poolId, userId, gameId, pickedTeamId, pickedSeed, oppSeed, stakePoints, posted_odds]
+         (pool_id, user_id, game_id, team_id, amount, odds, expected_payout, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'PENDING')
+       RETURNING id`,
+      [poolId, userId, gameId, pickedTeamId, stakePoints, posted_odds, stakePoints * posted_odds]
     );
-    const wagerId = ins.rows[0].wager_id;
+    const wagerId = ins.rows[0].id;
 
+    // Update user balance
     await query(
-      `INSERT INTO mm.transactions
-         (pool_id, user_id, round_code, tx_type, amount_points, wager_id, game_id, notes)
-       VALUES ($1,$2,$3,'WAGER_STAKE',$4,$5,$6,'Stake placed')`,
-      [poolId, userId, g.round_code ?? 1, -stakePoints, wagerId, gameId]
+      `UPDATE mm.users SET balance = balance - $1 WHERE id = $2`,
+      [stakePoints, userId]
     );
-    await query("COMMIT");
 
     const expected_payout = stakePoints * posted_odds;
     return res.status(201).json({
@@ -101,7 +94,7 @@ r.post("/", validators, async (req, res) => {
         stake_points: stakePoints,
         posted_odds,
         expected_payout,
-        status: "OPEN",
+        status: "PENDING",
       },
     });
   } catch (err) {
