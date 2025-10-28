@@ -672,6 +672,157 @@ body {
   font-size: 0.9rem;
 }
 
+.warning-message {
+  background: #fffbeb;
+  color: #d97706;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #fde68a;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* View Picks Page Styles */
+.no-picks-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.no-picks-message p {
+  margin: 12px 0;
+  font-size: 1rem;
+}
+
+.picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pick-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.pick-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pick-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-matchup {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pick-time {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.pick-status {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.pick-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.pick-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pick-detail-item .label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pick-detail-item .value {
+  font-size: 1rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pick-detail-item .value.highlight {
+  color: #16a34a;
+}
+
+.picks-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-top: 24px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* Responsive for View Picks */
+@media (max-width: 768px) {
+  .pick-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pick-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .picks-summary {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
 /* Game Actions */
 .game-actions {
   margin-top: 12px;
@@ -950,5 +1101,150 @@ body {
     flex-direction: column;
     gap: 8px;
     text-align: center;
+  }
+}
+
+/* View Picks Page Styles */
+.no-picks-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.no-picks-message p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.pick-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  transition: box-shadow 0.2s;
+}
+
+.pick-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pick-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-matchup {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.pick-time {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.pick-status {
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.1);
+  white-space: nowrap;
+}
+
+.pick-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.pick-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.pick-detail-item .label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pick-detail-item .value {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.pick-detail-item .value.highlight {
+  color: #16a34a;
+  font-size: 16px;
+}
+
+.picks-summary {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 20px;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .pick-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pick-status {
+    align-self: flex-start;
+  }
+  
+  .pick-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .picks-summary {
+    flex-direction: column;
   }
 }
