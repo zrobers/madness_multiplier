@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { leaderboard } from "../data/mock";
 
-type Row = { user: string; initials: string; points: number };
+type Row = { user: string; initials: string; points: number; rank?: number };
 
 export default function Leaderboard() {
   const [realLeaderboard, setLeaderboard] = useState<Row[] | null>(null); // change name once real data is fetched
@@ -28,8 +28,8 @@ export default function Leaderboard() {
         setLoading(true);
         setError(null);
 
-        const poolId = "1";
-        const response = await fetch(`/api/leaderboard?poolId=${poolId}`);
+        const poolId = "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66";
+        const response = await fetch(`http://localhost:4000/api/leaderboard?poolId=${poolId}`);
         if (!response.ok) {
           throw new Error(`Error fetching leaderboard: ${response.statusText}`);
         }
@@ -39,6 +39,7 @@ export default function Leaderboard() {
           user: d.handle || d.user || "Unknown",
           initials: d.initials || "",
           points: Number(d.current_points ?? d.points ?? 0),
+          rank: Number(d.rank ?? 0),
         }));
 
         setLeaderboard(formatted);
@@ -74,7 +75,7 @@ export default function Leaderboard() {
           <tbody>
             {displayRows.map((r, i) => (
               <tr key={r.user}>
-                <td className="cell-rank">{i + 1}</td>
+                <td className="cell-rank">{r.rank ?? i + 1}</td>
                 <td className="cell-name">{r.user}</td>
                 <td className="cell-initials">{r.initials}</td>
                 <td className="cell-points">{r.points}</td>
