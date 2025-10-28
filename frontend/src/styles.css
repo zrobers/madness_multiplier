@@ -85,7 +85,7 @@ body {
 
 .belowGrid {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 3fr 1fr;
   gap: 16px;
   margin-top: 16px;
   align-items: start;
@@ -282,26 +282,231 @@ body {
   font-size: 12px;
 }
 
-/* ---------------- Bracket Placeholder ---------------- */
-.bracket {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  padding: 12px;
+/* ---------------- Tournament Bracket Styles ---------------- */
+.bracket-full-width {
+  width: 100%;
+  min-width: 800px;
 }
 
-.round {
+.bracket-container {
+  padding: 16px;
+  overflow-x: auto;
+  background: #fff;
+  width: 100%;
+}
+
+.bracket-layout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  min-width: 1600px;
+}
+
+.bracket-region {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+}
+
+.region-header {
+  margin-bottom: 16px;
+}
+
+.region-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.region-bracket {
+  display: flex;
+  gap: 16px;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.round-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.round-matches {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.match {
-  border: 1px solid var(--border);
-  border-radius: 10px;
+.bracket-match {
   background: #fff;
-  padding: 8px 10px;
-  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.bracket-match.scheduled {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.bracket-match.scheduled .team {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.match-status {
+  font-size: 9px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.match-region {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.match-game {
+  font-weight: 500;
+}
+
+.match-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.team.winner {
+  background: #e0f2fe;
+  border-color: #0ea5e9;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.team-seed {
+  font-weight: 700;
+  color: #64748b;
+  margin-right: 8px;
+  min-width: 30px;
+}
+
+.team-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.team-score {
+  font-weight: 700;
+  color: #1f2937;
+  margin-left: 8px;
+  min-width: 20px;
+  text-align: right;
+}
+
+.team.winner .team-score {
+  color: #0c4a6e;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1600px) {
+  .bracket-layout {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    min-width: 1200px;
+  }
+  
+  .bracket-region {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .bracket-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    min-width: 800px;
+  }
+  
+  .bracket-region {
+    min-width: auto;
+  }
+  
+  .region-bracket {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .bracket-round {
+    min-width: 180px;
+  }
+  
+  .bracket-match {
+    padding: 6px;
+  }
+  
+  .team {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bracket-layout {
+    min-width: auto;
+  }
+  
+  .round-matches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  
+  .team {
+    padding: 3px 4px;
+    font-size: 10px;
+  }
 }
 
 .hint {

@@ -59,6 +59,19 @@ export default function HomePage() {
         </>
       )}
 
+      <section className="belowGrid">
+        <aside className="left">
+          <Leaderboard />
+          <div style={{ height: 12 }} />
+          <Pools />
+        </aside>
+        <div className="centerSpacer" aria-hidden />
+        <aside className="right">
+          <div className="bracket-full-width">
+            <Bracket />
+          </div>
+        </aside>
+      </section>
       {activeTab === 'submit-picks' && (
         <SubmitPicks />
       )}
