@@ -4,6 +4,7 @@ import express from "express"; import cors from "cors"; import helmet from "helm
 
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import wagersRoutes from "./routes/wagersRoutes.js";
+import authRoutes from "./routes/authenticateRoutes.js";
 import poolsRoutes from "./routes/poolsRoutes.js";
 import gamesRoutes from "./routes/gamesRoutes.js";
 
@@ -30,6 +31,8 @@ app.use("/api/wagers", (req, res, next) => {
   if (!req.user?.id) return res.status(401).json({ error: "Unauthenticated" });
   next();
 }, wagersRoutes);                                       // POST /api/wagers
+
+app.use("/api/auth", authRoutes);
 
 app.listen(process.env.PORT || 4000, () =>
   console.log(`API listening on :${process.env.PORT || 4000}`)
