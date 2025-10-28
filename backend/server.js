@@ -4,7 +4,7 @@ import express from "express"; import cors from "cors"; import helmet from "helm
 
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import wagersRoutes from "./routes/wagersRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routes/authenticateRoutes.js";
 
 const app = express();
 app.use(helmet());

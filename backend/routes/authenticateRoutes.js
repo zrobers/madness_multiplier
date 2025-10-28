@@ -1,27 +1,23 @@
-// routes/userRoutes.js
-import express from "express";
-import { query } from "../db.js";
+import { Router } from "express";
+import pool from "./index.js";
 
-const router = express.Router();
+const router = Router();
 
-// Add a new user in Postgres after Firebase login/register
-router.post("/", async (req, res) => {
-  const { uid, email, role } = req.body;
-
-  if (!uid || !email) {
-    return res.status(400).json({ error: "Missing uid or email" });
-  }
+router.post("/register", async (req, res) => {
+  const { auth0_sub, handle, email } = req.body;
 
   try {
-    await query(
-      "INSERT INTO users (firebase_uid, email, role) VALUES ($1, $2, $3) ON CONFLICT (firebase_uid) DO NOTHING",
-      [uid, email, role || "basic"]
+    const { rows } = await pool.query(
+      `INSERT INTO mm.users (auth0_sub, handle, email)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [auth0_sub, handle, email]
     );
-    res.status(201).json({ message: "User saved in Postgres" });
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(400).json({ error: "Failed to register user" });
   }
 });
 
 export default router;
+
