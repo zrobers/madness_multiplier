@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { leaderboard } from "../data/mock";
-import { mock } from "node:test";
 
 type Row = { user: string; initials: string; points: number };
 
@@ -29,7 +28,7 @@ export default function Leaderboard() {
         setLoading(true);
         setError(null);
 
-        const poolId = "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66";
+        const poolId = "1";
         const response = await fetch(`/api/leaderboard?poolId=${poolId}`);
         if (!response.ok) {
           throw new Error(`Error fetching leaderboard: ${response.statusText}`);

@@ -515,3 +515,440 @@ body {
   color: #64748b;
   border-top: 1px solid var(--border);
 }
+
+/* ---------------- Wager Placement Styles ---------------- */
+.wager-placement {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wager-placement h3 {
+  margin: 0 0 16px 0;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.balance-info {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border-left: 4px solid #3b82f6;
+}
+
+.balance-info p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.wager-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.team-selection h4,
+.amount-selection h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.team-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.team-option:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.team-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.team-option input[type="radio"] {
+  margin-right: 12px;
+  accent-color: #3b82f6;
+}
+
+.team-info {
+  font-size: 0.95rem;
+}
+
+.amount-selection input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.amount-selection input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.wager-summary {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.wager-summary h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.summary-details p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.place-wager-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  align-self: flex-start;
+}
+
+.place-wager-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.place-wager-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+/* Game Actions */
+.game-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.wager-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.wager-btn:hover {
+  background: #2563eb;
+}
+
+.validation-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+/* Submit Picks Page Styles */
+.wager-instructions {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid #3b82f6;
+}
+
+.wager-instructions h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.wager-instructions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.wager-instructions li {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.round-section {
+  margin-bottom: 32px;
+}
+
+.round-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.game-wager-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-wager-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.game-time {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.game-region {
+  font-size: 0.8rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.teams-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.team-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  background: white;
+}
+
+.team-option:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.team-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.team-option input[type="radio"] {
+  margin: 0;
+  accent-color: #3b82f6;
+}
+
+.team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-info .seed {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.team-info .name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.vs {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0 8px;
+}
+
+.wager-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amount-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amount-input label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.amount-input input {
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.amount-input input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.payout-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.odds {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.expected-payout {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.submit-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border);
+  text-align: center;
+}
+
+.submit-wagers-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 200px;
+}
+
+.submit-wagers-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submit-wagers-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Responsive Design for Submit Picks */
+@media (max-width: 768px) {
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .teams-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .vs {
+    order: 2;
+  }
+  
+  .payout-info {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
