@@ -29,7 +29,7 @@ export default function Leaderboard() {
         setLoading(true);
         setError(null);
 
-        const poolId = "12345";
+        const poolId = "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66";
         const response = await fetch(`/api/leaderboard?poolId=${poolId}`);
         if (!response.ok) {
           throw new Error(`Error fetching leaderboard: ${response.statusText}`);
