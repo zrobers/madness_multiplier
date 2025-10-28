@@ -34,7 +34,9 @@ export default function HomePage() {
         </aside>
         <div className="centerSpacer" aria-hidden />
         <aside className="right">
-          <Bracket />
+          <div className="bracket-full-width">
+            <Bracket />
+          </div>
         </aside>
       </section>
     </div>
