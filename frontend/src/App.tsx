@@ -1,9 +1,10 @@
+import { onAuthStateChanged } from "firebase/auth";
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { auth } from "./firebaseConfig";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/LoginPage";
-import { auth } from "./firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
+import SubmitPicks from "./pages/SubmitPicks";
 import "./styles.css";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage />} />
+        <Route path="/submit-picks" element={<SubmitPicks />} />
       </Routes>
     </Router>
   );

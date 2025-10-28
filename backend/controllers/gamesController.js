@@ -12,44 +12,44 @@ export async function getGames(req, res, next) {
     const result = await query(
       `
       SELECT 
-        g.game_id,
-        g.round_code,
-        g.region,
-        g.game_no,
-        g.start_time_utc,
+        g.id AS game_id,
+        g.round AS round_code,
+        NULL AS region,
+        NULL AS game_no,
+        g.start_time AS start_time_utc,
         g.status,
-        g.score_a,
-        g.score_b,
+        NULL AS score_a,
+        NULL AS score_b,
         g.winner_team_id,
         
-        -- Team A
-        ta.team_id AS team_a_id,
-        ta.team_name AS team_a_name,
-        g.team_a_seed,
+        -- Home Team (Team A)
+        g.home_team_id AS team_a_id,
+        ht.name AS team_a_name,
+        ht.seed AS team_a_seed,
         
-        -- Team B
-        tb.team_id AS team_b_id,
-        tb.team_name AS team_b_name,
-        g.team_b_seed,
+        -- Away Team (Team B)
+        g.away_team_id AS team_b_id,
+        at.name AS team_b_name,
+        at.seed AS team_b_seed,
         
         -- Winner info
-        tw.team_name AS winner_name,
+        wt.name AS winner_name,
         
         -- Check if game is upcoming, live, or final
         CASE 
-          WHEN g.start_time_utc > $2::timestamptz THEN 'UPCOMING'
+          WHEN g.start_time > $2::timestamptz THEN 'UPCOMING'
           WHEN g.status = 'IN_PROGRESS' THEN 'LIVE'
           WHEN g.status = 'FINAL' THEN 'FINAL'
-          WHEN g.status = 'SCHEDULED' AND g.start_time_utc <= $2::timestamptz THEN 'LIVE'
+          WHEN g.status = 'SCHEDULED' AND g.start_time <= $2::timestamptz THEN 'LIVE'
           ELSE 'FINAL'
         END AS game_state
         
       FROM mm.games g
-      JOIN mm.teams ta ON ta.team_id = g.team_a_id
-      JOIN mm.teams tb ON tb.team_id = g.team_b_id
-      LEFT JOIN mm.teams tw ON tw.team_id = g.winner_team_id
-      WHERE g.season_year = $1
-      ORDER BY g.round_code ASC, g.start_time_utc ASC;
+      JOIN mm.teams ht ON ht.id = g.home_team_id
+      JOIN mm.teams at ON at.id = g.away_team_id
+      LEFT JOIN mm.teams wt ON wt.id = g.winner_team_id
+      WHERE ht.season = $1
+      ORDER BY g.id ASC, g.start_time ASC;
       `,
       [season, CURRENT_TIME.toISOString()]
     );
