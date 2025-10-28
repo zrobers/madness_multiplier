@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import Bracket from "../components/Bracket";
 import GameData from "../components/GameData";
 import Leaderboard from "../components/Leaderboard";
-//import logoImage from "../assets/mm_logo_v1.jpg";
 import { useNavigate } from "react-router-dom";
 import Pools from "../components/Pools";
 import SubmitPicks from "./SubmitPicks";
+import HowItWorks from "./HowItWorks";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -18,7 +18,18 @@ export default function HomePage() {
   return (
     <div className="container">
       <div className="appHeader">
-        {/* <img src={logoImage} alt="Madness Multiplier Logo" className="logo" /> */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <img src="/mm_logo_v1.jpg" alt="Madness Multiplier Logo" className="logo" />
+          <h1 style={{ 
+            fontSize: "1.5rem", 
+            fontWeight: "700", 
+            color: "#1f2937", 
+            margin: 0,
+            letterSpacing: "1px"
+          }}>
+            MADNESS MULTIPLIER
+          </h1>
+        </div>
         <header className="tabs">
           <button 
             className={`tab ${activeTab === 'home' ? 'active' : ''}`}
@@ -33,7 +44,12 @@ export default function HomePage() {
           >
             Submit Picks
           </button>
-          <button className="tab" disabled>How It Works</button>
+          <button 
+            className={`tab ${activeTab === 'how-it-works' ? 'active' : ''}`}
+            onClick={() => handleTabClick('how-it-works')}
+          >
+            How It Works
+          </button>
         </header>
         <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
 
@@ -62,6 +78,10 @@ export default function HomePage() {
       )}
       {activeTab === 'submit-picks' && (
         <SubmitPicks />
+      )}
+      
+      {activeTab === 'how-it-works' && (
+        <HowItWorks />
       )}
     </div>
   );
