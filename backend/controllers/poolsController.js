@@ -9,7 +9,7 @@ import { query } from "../db/index.js";
 export async function getAllPools(reqOrOpts = {}) {
   const sql = `
     SELECT
-      p.id AS pool_id,
+      p.pool_id,
       p.name,
       NULL AS owner_user_id,
       'Admin' AS owner_handle,
@@ -24,8 +24,8 @@ export async function getAllPools(reqOrOpts = {}) {
       SELECT pool_id, COUNT(*) AS member_count
       FROM mm.pool_members
       GROUP BY pool_id
-    ) pm ON pm.pool_id = p.id
-    ORDER BY p.id DESC
+    ) pm ON pm.pool_id = p.pool_id
+    ORDER BY p.pool_id DESC
     LIMIT 500;
   `;
 
