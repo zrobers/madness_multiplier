@@ -14,6 +14,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       # Mount ONLY the db init folder (contains 00-run.sh, create.sql, load.sql)
       - ./backend/db:/docker-entrypoint-initdb.d:ro
+      - ./backend/db/data:/seed
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d madness"]
       interval: 5s
