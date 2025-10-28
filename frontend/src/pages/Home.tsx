@@ -3,6 +3,7 @@ import Leaderboard from "../components/Leaderboard";
 import GameData from "../components/GameData";
 import Bracket from "../components/Bracket";
 import Pools from "../components/Pools";
+import logoImage from "../assets/mm_logo_v1.jpg";
 
 export default function HomePage() {
   return (
