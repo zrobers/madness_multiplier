@@ -43,7 +43,7 @@ export default function SubmitPicks() {
   const [success, setSuccess] = useState<string>('');
   const [userBalance, setUserBalance] = useState<number>(0);
   const [wagers, setWagers] = useState<WagerForm[]>([]);
-  const [poolId] = useState<number>(1);
+  const [poolId] = useState<string>('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66');
 
   useEffect(() => {
     fetchGames();
@@ -62,23 +62,121 @@ export default function SubmitPicks() {
       
       const data = await response.json();
       console.log('Games data:', data);
-      setGames(data.games || []);
       
-      // Initialize wagers array for each scheduled game
+      // Filter for SCHEDULED games only
       const scheduledGames = data.games.filter((game: Game) => game.status === 'SCHEDULED');
       console.log('Scheduled games:', scheduledGames.length);
-      setWagers(scheduledGames.map((game: Game) => ({
-        gameId: game.game_id,
-        teamId: null,
-        amount: 0
-      })));
+      
+      // If no scheduled games, use demo games
+      if (scheduledGames.length === 0) {
+        console.log('No scheduled games found, using demo games');
+        setError(`⚠️ No upcoming games - Using demo games for testing`);
+        useDemoGames();
+      } else {
+        setGames(scheduledGames);
+        setWagers(scheduledGames.map((game: Game) => ({
+          gameId: game.game_id,
+          teamId: null,
+          amount: 0
+        })));
+      }
       
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching games:", error);
-      setError(`Failed to load games: ${error.message}`);
+      console.error("Error fetching games from API, using demo games:", error);
+      setError(`⚠️ API unavailable - Using demo games for testing`);
+      useDemoGames();
       setLoading(false);
     }
+  };
+
+  const useDemoGames = () => {
+    const demoGames: Game[] = [
+      {
+        game_id: 9001,
+        round_code: 'R64',
+        region: 'South',
+        game_no: 1,
+        start_time_utc: '2025-03-21T12:00:00Z',
+        status: 'SCHEDULED',
+        score_a: null,
+        score_b: null,
+        team_a_id: 9001,
+        team_a_name: 'Duke',
+        team_a_seed: 2,
+        team_b_id: 9002,
+        team_b_name: 'Princeton',
+        team_b_seed: 15,
+        winner_team_id: null,
+        winner_name: null,
+        game_state: 'UPCOMING'
+      },
+      {
+        game_id: 9002,
+        round_code: 'R64',
+        region: 'East',
+        game_no: 2,
+        start_time_utc: '2025-03-21T14:30:00Z',
+        status: 'SCHEDULED',
+        score_a: null,
+        score_b: null,
+        team_a_id: 9003,
+        team_a_name: 'Gonzaga',
+        team_a_seed: 1,
+        team_b_id: 9004,
+        team_b_name: 'Arizona',
+        team_b_seed: 16,
+        winner_team_id: null,
+        winner_name: null,
+        game_state: 'UPCOMING'
+      },
+      {
+        game_id: 9003,
+        round_code: 'R64',
+        region: 'West',
+        game_no: 3,
+        start_time_utc: '2025-03-21T17:00:00Z',
+        status: 'SCHEDULED',
+        score_a: null,
+        score_b: null,
+        team_a_id: 9005,
+        team_a_name: 'Kansas',
+        team_a_seed: 1,
+        team_b_id: 9006,
+        team_b_name: 'Kentucky',
+        team_b_seed: 8,
+        winner_team_id: null,
+        winner_name: null,
+        game_state: 'UPCOMING'
+      },
+      {
+        game_id: 9004,
+        round_code: 'R64',
+        region: 'Midwest',
+        game_no: 4,
+        start_time_utc: '2025-03-21T19:30:00Z',
+        status: 'SCHEDULED',
+        score_a: null,
+        score_b: null,
+        team_a_id: 9007,
+        team_a_name: 'UConn',
+        team_a_seed: 1,
+        team_b_id: 9008,
+        team_b_name: 'Alabama',
+        team_b_seed: 4,
+        winner_team_id: null,
+        winner_name: null,
+        game_state: 'UPCOMING'
+      }
+    ];
+    
+    console.log('Using demo games:', demoGames.length);
+    setGames(demoGames);
+    setWagers(demoGames.map((game: Game) => ({
+      gameId: game.game_id,
+      teamId: null,
+      amount: 0
+    })));
   };
 
   const fetchUserBalance = async () => {
@@ -103,7 +201,8 @@ export default function SubmitPicks() {
   };
 
   const calculateOdds = (pickedSeed: number, oppSeed: number): number => {
-    return Math.max(1.1, Math.min(3.5, 1.0 + (oppSeed / pickedSeed)));
+    // M = clip(1 + seed_picked / seed_opponent, 1.1, 3.5)
+    return Math.max(1.1, Math.min(3.5, 1.0 + (pickedSeed / oppSeed)));
   };
 
   const getExpectedPayout = (gameId: number): number => {
@@ -147,32 +246,72 @@ export default function SubmitPicks() {
     setError('');
     setSuccess('');
 
-    try {
-      const validWagers = wagers.filter(w => w.teamId && w.amount > 0);
-      
-      // Submit each wager
-      const results = await Promise.all(
-        validWagers.map(async (wager) => {
-          const response = await axios.post('http://localhost:4000/api/wagers', {
-            poolId,
-            gameId: wager.gameId,
-            teamId: wager.teamId,
-            amount: wager.amount
-          }, {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-User-Id': '1'
-            }
-          });
-          return response.data;
-        })
-      );
+    const validWagers = wagers.filter(w => w.teamId && w.amount > 0);
+    const usingMockData = error.includes('mock');
 
-      setSuccess(`Successfully placed ${results.length} wagers!`);
-      fetchUserBalance(); // Refresh balance
-      
-      // Reset form
-      setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
+    try {
+      if (usingMockData) {
+        // Save to localStorage for demo purposes
+        const demoWagers = validWagers.map(wager => {
+          const game = games.find(g => g.game_id === wager.gameId)!;
+          const pickedSeed = wager.teamId === game.team_a_id ? game.team_a_seed : game.team_b_seed;
+          const oppSeed = wager.teamId === game.team_a_id ? game.team_b_seed : game.team_a_seed;
+          const odds = calculateOdds(pickedSeed, oppSeed);
+          
+          return {
+            wager_id: `demo-${Date.now()}-${wager.gameId}`,
+            pool_id: poolId,
+            user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+            game_id: wager.gameId,
+            picked_team_id: wager.teamId,
+            picked_team_name: wager.teamId === game.team_a_id ? game.team_a_name : game.team_b_name,
+            opponent_team_name: wager.teamId === game.team_a_id ? game.team_b_name : game.team_a_name,
+            picked_seed: pickedSeed,
+            opp_seed: oppSeed,
+            stake_points: wager.amount,
+            posted_odds: odds,
+            expected_payout: wager.amount * odds,
+            status: 'DEMO',
+            placed_at: new Date().toISOString(),
+            game_start_time: game.start_time_utc,
+            round_code: game.round_code
+          };
+        });
+
+        // Get existing demo wagers from localStorage
+        const existingDemoWagers = JSON.parse(localStorage.getItem('demoWagers') || '[]');
+        localStorage.setItem('demoWagers', JSON.stringify([...existingDemoWagers, ...demoWagers]));
+
+        setSuccess(`✅ Successfully placed ${demoWagers.length} DEMO wagers! (View them in "View Picks" tab)`);
+        
+        // Reset form
+        setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
+        
+      } else {
+        // Submit to real API
+        const results = await Promise.all(
+          validWagers.map(async (wager) => {
+            const response = await axios.post('http://localhost:4000/api/wagers', {
+              poolId,
+              gameId: wager.gameId,
+              teamId: wager.teamId,
+              amount: wager.amount
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' // DEV user ID (zach)
+              }
+            });
+            return response.data;
+          })
+        );
+
+        setSuccess(`Successfully placed ${results.length} wagers!`);
+        fetchUserBalance(); // Refresh balance
+        
+        // Reset form
+        setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
+      }
       
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || 'Failed to place wagers';
@@ -203,7 +342,8 @@ export default function SubmitPicks() {
     <div className="card">
         <div className="cardTitle">Submit Your Picks</div>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && error.includes('mock') && <div className="warning-message">{error}</div>}
+        {error && !error.includes('mock') && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
         
         {games.length === 0 && !loading && (

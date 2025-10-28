@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Bracket from "../components/Bracket";
 import GameData from "../components/GameData";
 import Leaderboard from "../components/Leaderboard";
-import { useNavigate } from "react-router-dom";
 import Pools from "../components/Pools";
-import SubmitPicks from "./SubmitPicks";
 import HowItWorks from "./HowItWorks";
+import SubmitPicks from "./SubmitPicks";
+import ViewPicks from "./ViewPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -37,7 +38,12 @@ export default function HomePage() {
           >
             Home
           </button>
-          <button className="tab" disabled>View Picks</button>
+          <button 
+            className={`tab ${activeTab === 'view-picks' ? 'active' : ''}`}
+            onClick={() => handleTabClick('view-picks')}
+          >
+            View Picks
+          </button>
           <button 
             className={`tab ${activeTab === 'submit-picks' ? 'active' : ''}`}
             onClick={() => handleTabClick('submit-picks')}
@@ -76,8 +82,16 @@ export default function HomePage() {
           </section>
         </>
       )}
+      {activeTab === 'view-picks' && (
+        <ViewPicks />
+      )}
+
       {activeTab === 'submit-picks' && (
         <SubmitPicks />
+      )}
+
+      {activeTab === 'how-it-works' && (
+        <HowItWorks />
       )}
       
       {activeTab === 'how-it-works' && (

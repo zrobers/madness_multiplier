@@ -5,6 +5,7 @@ import { auth } from "./firebaseConfig";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/LoginPage";
 import SubmitPicks from "./pages/SubmitPicks";
+import ViewPicks from "./pages/ViewPicks";
 import "./styles.css";
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage />} />
         <Route path="/submit-picks" element={<SubmitPicks />} />
+        <Route path="/view-picks" element={<ViewPicks />} />
       </Routes>
     </Router>
   );

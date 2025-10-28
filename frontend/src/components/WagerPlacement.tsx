@@ -13,12 +13,12 @@ interface WagerPlacementProps {
     name: string;
     seed: number;
   };
-  poolId: number;
+  poolId: string;
   onWagerPlaced?: (wager: any) => void;
 }
 
 interface WagerData {
-  poolId: number;
+  poolId: string;
   gameId: number;
   teamId: number;
   amount: number;
@@ -32,9 +32,11 @@ export default function WagerPlacement({ gameId, teamA, teamB, poolId, onWagerPl
   const [success, setSuccess] = useState<string>('');
   const [userBalance, setUserBalance] = useState<number>(0);
 
-  // Calculate odds based on seed difference
+  // Calculate odds: M = clip(1 + seed_picked / seed_opponent, 1.1, 3.5)
+  // Your multiplier is based on YOUR seed - picking favorite (seed 1) gives lower payout
   const calculateOdds = (pickedSeed: number, oppSeed: number): number => {
-    return 1.0 + (pickedSeed / oppSeed);
+    const rawOdds = 1.0 + (pickedSeed / oppSeed);
+    return Math.max(1.1, Math.min(3.5, rawOdds));
   };
 
   const getOdds = () => {
@@ -94,7 +96,7 @@ export default function WagerPlacement({ gameId, teamA, teamB, poolId, onWagerPl
 
     try {
       const wagerData: WagerData = {
-        poolId: Number(poolId),
+        poolId,
         gameId,
         teamId: selectedTeam,
         amount: parseFloat(amount)
@@ -103,7 +105,7 @@ export default function WagerPlacement({ gameId, teamA, teamB, poolId, onWagerPl
       const response = await axios.post(`${import.meta.env.VITE_API_BASE}/api/wagers`, wagerData, {
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': '1', // DEV user ID - in production this would come from auth
+          'X-User-Id': 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', // DEV user ID (zach) - in production this would come from auth
         },
       });
 
