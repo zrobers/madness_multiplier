@@ -30,6 +30,6 @@ app.use("/api/wagers", (req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 
-app.listen(process.env.PORT || 5000, () =>
-  console.log(`API listening on :${process.env.PORT || 5000}`)
+app.listen(process.env.PORT || 4000, () =>
+  console.log(`API listening on :${process.env.PORT || 4000}`)
 );

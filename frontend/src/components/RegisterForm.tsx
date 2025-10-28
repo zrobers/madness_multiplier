@@ -16,7 +16,7 @@ export default function RegisterForm() {
       const user = userCredential.user;
 
       // 2️⃣ Call backend to store app-specific info
-      await axios.post("http://localhost:5000/api/users", {
+      await axios.post("http://localhost:4000/api/users", {
         uid: user.uid,
         email: user.email,
         role: "basic"  // optional
