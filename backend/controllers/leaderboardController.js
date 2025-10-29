@@ -9,10 +9,14 @@ export async function getLeaderboard(req, res, next) {
 
     const result = await query(
       `
-      SELECT rank_in_pool AS rank, handle, initials, current_points
-      FROM mm.vw_pool_leaderboard
-      WHERE pool_id = $1
-      ORDER BY rank_in_pool ASC;
+      SELECT 
+        lb.rank_in_pool AS rank,
+        lb.handle,
+        lb.initials,
+        lb.current_points
+      FROM mm.vw_pool_leaderboard lb
+      WHERE lb.pool_id = $1
+      ORDER BY lb.rank_in_pool ASC;
       `,
       [poolId]
     );

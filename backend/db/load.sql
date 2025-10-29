@@ -1,12 +1,7 @@
--- =====================================================
--- Madness Multiplier - Database Seed Script (PostgreSQL)
--- =====================================================
 
 SET search_path TO mm, public;
 
--- -----------------------------------------------------
--- 1. Clear existing data (reverse dependency order)
--- -----------------------------------------------------
+
 TRUNCATE TABLE mm.transactions CASCADE;
 TRUNCATE TABLE mm.wagers CASCADE;
 TRUNCATE TABLE mm.games CASCADE;
@@ -18,9 +13,7 @@ TRUNCATE TABLE mm.teams CASCADE;
 TRUNCATE TABLE mm.round_balance_snapshots CASCADE;
 TRUNCATE TABLE mm.leaderboard_snapshots CASCADE;
 
--- -----------------------------------------------------
--- 2. Load static reference data
--- -----------------------------------------------------
+
 COPY mm.tournaments(season_year)
 FROM '/seed/tournaments_2024.csv'
 CSV HEADER;
@@ -29,9 +22,6 @@ COPY mm.teams(team_name)
 FROM '/seed/teams_2024.csv'
 CSV HEADER;
 
--- -----------------------------------------------------
--- 3. Create example users
--- -----------------------------------------------------
 INSERT INTO mm.users (user_id, handle, initials, email, created_at) VALUES
   ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid, 'zach',    'ZR', 'zach@madness.com',   now()),
   ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22'::uuid, 'andrew',  'AT', 'andrew@madness.com', now()),
@@ -39,9 +29,7 @@ INSERT INTO mm.users (user_id, handle, initials, email, created_at) VALUES
   ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44'::uuid, 'justin',  'JA', 'justin@madness.com', now()),
   ('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55'::uuid, 'logan',   'LD', 'logan@madness.com',  now());
 
--- -----------------------------------------------------
--- 4. Create a pool for 2024 and add users
--- -----------------------------------------------------
+
 INSERT INTO mm.pools (pool_id, name, owner_user_id, season_year, initial_points, created_at)
 VALUES (
   'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66'::uuid,
@@ -56,9 +44,7 @@ VALUES (
 INSERT INTO mm.pool_members (pool_id, user_id, joined_at)
 SELECT 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66'::uuid, user_id, now() FROM mm.users;
 
--- -----------------------------------------------------
--- 5. Load games (via temporary staging)
--- -----------------------------------------------------
+
 CREATE TEMP TABLE games_temp (
   season_year     SMALLINT,
   round_code      SMALLINT,
@@ -105,9 +91,9 @@ LEFT JOIN mm.teams tw ON tw.team_name = gt.winner_name;
 
 DROP TABLE games_temp;
 
--- -----------------------------------------------------
--- 6. Initialize every user to 1000 points (ledger)
--- -----------------------------------------------------
+
+-- Initialize every user to 1000 points (ledger)
+
 INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes, created_at)
 SELECT
   'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66'::uuid,
@@ -118,9 +104,9 @@ SELECT
   now()
 FROM mm.users;
 
--- -----------------------------------------------------
--- 7. Verify that data loaded successfully
--- -----------------------------------------------------
+
+-- Verify that data loaded successfully
+
 SELECT 'tournaments' AS table_name, COUNT(*) AS row_count FROM mm.tournaments
 UNION ALL SELECT 'teams', COUNT(*) FROM mm.teams
 UNION ALL SELECT 'users', COUNT(*) FROM mm.users

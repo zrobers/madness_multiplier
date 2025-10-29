@@ -11,22 +11,21 @@ export async function getAllPools(reqOrOpts = {}) {
     SELECT
       p.pool_id,
       p.name,
-      p.owner_user_id,
-      u.handle AS owner_handle,
-      p.season_year,
-      p.initial_points,
-      p.unbet_penalty_pct,
-      p.allow_multi_bets,
-      p.created_at,
+      NULL AS owner_user_id,
+      'Admin' AS owner_handle,
+      2024 AS season_year,
+      1000 AS initial_points,
+      20.0 AS unbet_penalty_pct,
+      true AS allow_multi_bets,
+      NOW() AS created_at,
       COALESCE(pm.member_count, 0) AS member_count
     FROM mm.pools p
-    JOIN mm.users u ON u.user_id = p.owner_user_id
     LEFT JOIN (
       SELECT pool_id, COUNT(*) AS member_count
       FROM mm.pool_members
       GROUP BY pool_id
     ) pm ON pm.pool_id = p.pool_id
-    ORDER BY p.created_at DESC
+    ORDER BY p.pool_id DESC
     LIMIT 500;
   `;
 

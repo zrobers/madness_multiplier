@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Game {
   game_id: number;
@@ -15,6 +15,7 @@ interface Game {
   team_b_id: number;
   team_b_name: string;
   team_b_seed: number;
+  winner_team_id: number | null;
   winner_name: string | null;
   game_state: string;
 }
