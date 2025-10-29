@@ -2,71 +2,53 @@ import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [handle, setHandle] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
 
     try {
-      // 1️⃣ Create user in Firebase
+      // Create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
+      const user = userCredential.user;
 
-      // 2️⃣ Send POST request to backend to insert into Postgres
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          auth0_sub: firebaseUser.uid,
-          handle,
-          email,
-        }),
+      // Send POST request to backend to insert into Postgres
+      await axios.post("http://localhost:4000/api/auth/register", {
+        uid: user.uid,
+        name,
+        email: user.email,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to register user");
-      }
 
-      const data = await response.json();
-      console.log("Registered user:", data);
-
-      // 3️⃣ Clear form and redirect
       setEmail("");
       setPassword("");
-      setHandle("");
-      navigate("/"); // redirect to homepage
-
+      setName("");
+      navigate("/");
     } catch (err: any) {
+      console.error(err);
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleRegister}>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <form onSubmit={handleRegister} className="form">
       <input
         type="text"
-        placeholder="Handle"
-        value={handle}
-        onChange={(e) => setHandle(e.target.value)}
+        placeholder="Full Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         required
       />
       <input
         type="email"
-        placeholder="Email"
+        placeholder="Email Address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -78,9 +60,8 @@ export default function RegisterForm() {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <button type="submit" disabled={loading}>
-        {loading ? "Registering..." : "Register"}
-      </button>
+      <button type="submit">Register</button>
+      {error && <p className="error">{error}</p>}
     </form>
   );
 }
