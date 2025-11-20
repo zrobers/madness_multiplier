@@ -1,24 +1,25 @@
-import { Router } from "express";
-import pool from "./index.js"; // your db.js or index.js
+import express from "express";
+import pool from "../db.js";
 
-const router = Router();
+const router = express.Router();
 
-// POST /api/auth/register
+// Register route — called from frontend
 router.post("/register", async (req, res) => {
-  const { auth0_sub, handle, email } = req.body;
+  const { uid, name, email } = req.body;
 
   try {
-    const { rows } = await pool.query(
+    const result = await pool.query(
       `INSERT INTO mm.users (auth0_sub, handle, email)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [auth0_sub, handle, email]
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [uid, name, email]
     );
-    res.json(rows[0]); // return the new user
+
+    res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("Error registering user:", err);
-    res.status(400).json({ error: "Failed to register user" });
+    console.error("Database insert failed:", err);
+    res.status(500).json({ error: "Database insert failed" });
   }
 });
 
 export default router;
-
