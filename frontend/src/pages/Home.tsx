@@ -1,5 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+
 import Bracket from "../components/Bracket";
 import GameData from "../components/GameData";
 import Leaderboard from "../components/Leaderboard";
@@ -10,58 +13,102 @@ import ViewPicks from "./ViewPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
-  
-  const handleTabClick = (tab: string) => {
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" | "how-it-works">("home");
+  const [userName, setUserName] = useState<string | null>(null);
+
+  // 1) Pick up name passed from Login (navigate("/", { state: { userName } }))
+  useEffect(() => {
+    const state = location.state as { userName?: string } | null;
+    if (state?.userName) {
+      setUserName(state.userName);
+    }
+  }, [location.state]);
+
+  // 2) Listen to Firebase auth so refresh still knows who we are
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserName(user.displayName || user.email || null);
+      } else {
+        setUserName(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "how-it-works") => {
     setActiveTab(tab);
   };
-  
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUserName(null);
+    navigate("/login");
+  };
+
   return (
     <div className="container">
       <div className="appHeader">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <img src="/mm_logo_v1.jpg" alt="Madness Multiplier Logo" className="logo" />
-          <h1 style={{ 
-            fontSize: "1.5rem", 
-            fontWeight: "700", 
-            color: "#1f2937", 
-            margin: 0,
-            letterSpacing: "1px"
-          }}>
+          <h1
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "700",
+              color: "#1f2937",
+              margin: 0,
+              letterSpacing: "1px",
+            }}
+          >
             MADNESS MULTIPLIER
           </h1>
         </div>
+
         <header className="tabs">
-          <button 
-            className={`tab ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => handleTabClick('home')}
+          <button
+            className={`tab ${activeTab === "home" ? "active" : ""}`}
+            onClick={() => handleTabClick("home")}
           >
             Home
           </button>
-          <button 
-            className={`tab ${activeTab === 'view-picks' ? 'active' : ''}`}
-            onClick={() => handleTabClick('view-picks')}
+          <button
+            className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
+            onClick={() => handleTabClick("view-picks")}
           >
             View Picks
           </button>
-          <button 
-            className={`tab ${activeTab === 'submit-picks' ? 'active' : ''}`}
-            onClick={() => handleTabClick('submit-picks')}
+          <button
+            className={`tab ${activeTab === "submit-picks" ? "active" : ""}`}
+            onClick={() => handleTabClick("submit-picks")}
           >
             Submit Picks
           </button>
-          <button 
-            className={`tab ${activeTab === 'how-it-works' ? 'active' : ''}`}
-            onClick={() => handleTabClick('how-it-works')}
+          <button
+            className={`tab ${activeTab === "how-it-works" ? "active" : ""}`}
+            onClick={() => handleTabClick("how-it-works")}
           >
             How It Works
           </button>
         </header>
-        <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
 
+        {/* Right side: either Login/Register or user pill + logout */}
+        {userName ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span className="user-pill">Hi, {userName}</span>
+            <button className="loginButton" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button className="loginButton" onClick={() => navigate("/login")}>
+            Login / Register
+          </button>
+        )}
       </div>
 
-      {activeTab === 'home' && (
+      {activeTab === "home" && (
         <>
           <section className="topRow">
             <GameData />
@@ -82,21 +129,10 @@ export default function HomePage() {
           </section>
         </>
       )}
-      {activeTab === 'view-picks' && (
-        <ViewPicks />
-      )}
 
-      {activeTab === 'submit-picks' && (
-        <SubmitPicks />
-      )}
-
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
-      )}
-      
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
-      )}
+      {activeTab === "view-picks" && <ViewPicks />}
+      {activeTab === "submit-picks" && <SubmitPicks />}
+      {activeTab === "how-it-works" && <HowItWorks />}
     </div>
   );
 }
