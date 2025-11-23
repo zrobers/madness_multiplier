@@ -1,5 +1,12 @@
 import { query } from "../db/index.js";
 
+async function findUserByHandle(handle) {
+  if (!handle) throw new Error('handle required');
+  const selRes = await query(`SELECT user_id, handle FROM mm.users WHERE handle = $1`, [handle]);
+  if (!selRes.rows.length) return null;
+  return { user_id: selRes.rows[0].user_id, handle: selRes.rows[0].handle };
+}
+
 export async function getAllPools(req, res) {
   try {
     const sql = `
@@ -25,6 +32,7 @@ export async function getAllPools(req, res) {
 export async function getPoolById(req, res) {
   const { id } = req.params;
   try {
+    // pool + owner
     const poolSql = `
       SELECT p.*, u.handle AS owner_handle
       FROM mm.pools p
@@ -35,6 +43,7 @@ export async function getPoolById(req, res) {
     if (!poolRes.rows.length) return res.status(404).json({ error: 'Pool not found' });
     const pool = poolRes.rows[0];
 
+    // members
     const membersSql = `
       SELECT pm.user_id, u.handle, pm.joined_at
       FROM mm.pool_members pm
@@ -43,27 +52,53 @@ export async function getPoolById(req, res) {
       ORDER BY pm.joined_at ASC
     `;
     const membersRes = await query(membersSql, [id]);
+    const members = membersRes.rows;
 
-    return res.json({ pool, members: membersRes.rows });
+    // wagers for this pool, joined to user, game and team names
+    const wagersSql = `
+      SELECT
+        w.wager_id,
+        w.pool_id,
+        w.user_id,
+        u.handle,
+        w.game_id,
+        g.team_a_id,
+        g.team_b_id,
+        g.start_time_utc,
+        w.picked_team_id,
+        CASE
+          WHEN w.picked_team_id = g.team_a_id THEN ta.team_name
+          WHEN w.picked_team_id = g.team_b_id THEN tb.team_name
+          ELSE NULL END AS picked_team_name,
+        CASE
+          WHEN w.picked_team_id = g.team_a_id THEN tb.team_name
+          WHEN w.picked_team_id = g.team_b_id THEN ta.team_name
+          ELSE NULL END AS opp_team_name,
+        w.picked_seed,
+        w.opp_seed,
+        w.stake_points,
+        w.posted_odds,
+        w.placed_at,
+        w.status,
+        w.settled_at,
+        w.payout_points
+      FROM mm.wagers w
+      JOIN mm.users u ON u.user_id = w.user_id
+      JOIN mm.games g ON g.game_id = w.game_id
+      LEFT JOIN mm.teams ta ON ta.team_id = g.team_a_id
+      LEFT JOIN mm.teams tb ON tb.team_id = g.team_b_id
+      WHERE w.pool_id = $1
+      ORDER BY u.handle, w.placed_at ASC
+    `;
+    const wagersRes = await query(wagersSql, [id]);
+    const wagers = wagersRes.rows;
+
+    return res.json({ pool, members, wagers });
   } catch (err) {
     console.error('getPoolById error', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
-
-async function findOrCreateUserByHandle(handle) {
-  if (!handle) throw new Error('handle required');
-  const selectSql = `SELECT user_id, handle FROM mm.users WHERE handle = $1`;
-  const selRes = await query(selectSql, [handle]);
-  if (selRes.rows.length) return { user_id: selRes.rows[0].user_id, handle: selRes.rows[0].handle, created: false };
-
-  const insertSql = `INSERT INTO mm.users (handle) VALUES ($1) RETURNING user_id, handle`;
-  const insRes = await query(insertSql, [handle]);
-  return { user_id: insRes.rows[0].user_id, handle: insRes.rows[0].handle, created: true };
-}
-
-// inside controllers/poolsController.js (ESM)
-// ... keep other imports and helper functions
 
 export async function createPool(req, res) {
   try {
@@ -72,17 +107,19 @@ export async function createPool(req, res) {
       return res.status(400).json({ error: 'name, season_year and owner_handle are required' });
     }
 
-    // 1) Ensure the tournament (season) exists. Insert if missing.
-    // mm.tournaments only needs season_year (created_at defaults to now)
+    // Ensure the tournament (season) exists. Insert if missing.
     await query(
       `INSERT INTO mm.tournaments (season_year) VALUES ($1) ON CONFLICT DO NOTHING`,
       [season_year]
     );
 
-    // 2) Ensure owner exists (create user row if needed)
-    const owner = await findOrCreateUserByHandle(owner_handle);
+    // Look up user by handle
+    const owner = await findUserByHandle(owner_handle);
+    if (!owner) {
+      return res.status(400).json({ error: 'owner handle does not exist. Please sign up or choose an existing handle.' });
+    }
 
-    // 3) Insert pool
+    // Insert pool with the existing owner_user_id
     const sql = `
       INSERT INTO mm.pools (name, owner_user_id, season_year, initial_points, unbet_penalty_pct, allow_multi_bets)
       VALUES ($1, $2, $3, COALESCE($4,1000), COALESCE($5,20.00), COALESCE($6, TRUE))
@@ -92,7 +129,7 @@ export async function createPool(req, res) {
     const insertRes = await query(sql, params);
     const pool = insertRes.rows[0];
 
-    // 4) Add owner as member (silently ignore if already)
+    // add owner as member (owner must already be a user)
     await query(
       `INSERT INTO mm.pool_members (pool_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [pool.pool_id, owner.user_id]
@@ -105,17 +142,21 @@ export async function createPool(req, res) {
   }
 }
 
-
 export async function joinPool(req, res) {
   try {
     const { id } = req.params; // pool_id
     const { handle } = req.body;
     if (!handle) return res.status(400).json({ error: 'handle is required to join' });
 
+    // ensure pool exists
     const poolCheck = await query(`SELECT pool_id FROM mm.pools WHERE pool_id = $1`, [id]);
     if (!poolCheck.rows.length) return res.status(404).json({ error: 'Pool not found' });
 
-    const user = await findOrCreateUserByHandle(handle);
+    // Require user exists
+    const user = await findUserByHandle(handle);
+    if (!user) {
+      return res.status(400).json({ error: 'handle does not exist. Please sign up first.' });
+    }
 
     const insertSql = `
       INSERT INTO mm.pool_members (pool_id, user_id)

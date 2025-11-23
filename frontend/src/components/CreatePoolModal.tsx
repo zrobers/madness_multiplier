@@ -1,16 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type Props = {
   onClose: () => void;
   onCreated: (pool: any) => void;
+  currentUser ?: string;
 };
 
-export default function CreatePoolModal({ onClose, onCreated }: Props) {
+export default function CreatePoolModal({ onClose, onCreated, currentUser }: Props) {
   const [name, setName] = useState("");
   const [seasonYear, setSeasonYear] = useState<number>(new Date().getFullYear());
-  const [ownerHandle, setOwnerHandle] = useState("");
+  const [ownerHandle, setOwnerHandle] = useState(currentUser ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentUser) setOwnerHandle(currentUser);
+  }, [currentUser]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,18 +64,27 @@ export default function CreatePoolModal({ onClose, onCreated }: Props) {
               onChange={(e) => setSeasonYear(Number(e.target.value))}
             />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <label>Your handle</label>
-            <input className="input" value={ownerHandle} onChange={(e) => setOwnerHandle(e.target.value)} />
-          </div>
 
-          {error && <div style={{ color: "red", marginBottom: 8 }}>{error}</div>}
+          {/* use currentUser when available; otherwise show field */}
+          {currentUser ? (
+            <div style={{ marginBottom: 8 }}>
+              <label>Owner</label>
+              <div style={{ padding: "8px 10px", background: "#f8fafc", borderRadius: 6 }}>{currentUser}</div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 8 }}>
+              <label>Your handle</label>
+              <input className="input" value={ownerHandle} onChange={(e) => setOwnerHandle(e.target.value)} />
+            </div>
+          )}
 
-          <div style={{ display: "flex", gap: 8 }}>
+          {error && <div style={{ color: "red" }}>{error}</div>}
+
+          <div style={{ marginTop: 8 }}>
             <button className="btn" type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create"}
             </button>
-            <button className="btn secondary" type="button" onClick={onClose}>
+            <button className="btn secondary" type="button" onClick={onClose} style={{ marginLeft: 8 }}>
               Cancel
             </button>
           </div>

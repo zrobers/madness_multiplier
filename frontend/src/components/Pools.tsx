@@ -1,7 +1,6 @@
-// src/components/Pools.tsx  (update/replace)
 import React, { useEffect, useState } from "react";
-import CreatePoolModal from "../components/CreatePoolModal";
-import JoinPoolModal from "../components/JoinPoolModal";
+import CreatePoolModal from "./CreatePoolModal";
+import JoinPoolModal from "./JoinPoolModal";
 
 type Pool = {
   pool_id: string;
@@ -17,9 +16,10 @@ type Pool = {
 
 type Props = {
   onOpenPool?: (poolId: string) => void;
+  userName?: string | null;
 };
 
-export default function Pools({ onOpenPool }: Props) {
+export default function Pools({ onOpenPool, userName }: Props) {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,10 +52,26 @@ export default function Pools({ onOpenPool }: Props) {
     if (onOpenPool) {
       onOpenPool(poolId);
     } else {
-      // fallback: navigate to route if desired in future
-      // e.g. navigate(`/pools/${encodeURIComponent(poolId)}`);
-      console.warn('onOpenPool not provided');
+      console.warn("onOpenPool not provided");
     }
+  }
+
+  function openCreate() {
+    if (!userName) {
+      setMessage("You must be logged in to create a pool.");
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+    setShowCreate(true);
+  }
+
+  function openJoin(poolId: string) {
+    if (!userName) {
+      setMessage("You must be logged in to join a pool.");
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+    setJoinPoolId(poolId);
   }
 
   return (
@@ -63,12 +79,12 @@ export default function Pools({ onOpenPool }: Props) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div className="lbHeader">POOLS</div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn" onClick={() => setShowCreate(true)}>Create</button>
+          <button className="btn" onClick={openCreate} disabled={!userName}>Create</button>
           <button className="btn secondary" onClick={fetchPools}>Refresh</button>
         </div>
       </div>
 
-      {message && <div style={{ color: "green", padding: 8 }}>{message}</div>}
+      {message && <div style={{ color: "orange", padding: 8 }}>{message}</div>}
 
       <div className="lbWrap">
         <table className="lbTable">
@@ -100,7 +116,7 @@ export default function Pools({ onOpenPool }: Props) {
                   <td className="cell-points">{p.member_count}</td>
                   <td className="cell-points">{p.initial_points}</td>
                   <td className="cell-actions">
-                    <button className="btn" onClick={() => setJoinPoolId(p.pool_id)}>Join</button>
+                    <button className="btn" onClick={() => openJoin(p.pool_id)} disabled={!userName}>Join</button>
                   </td>
                 </tr>
               ))
@@ -113,7 +129,7 @@ export default function Pools({ onOpenPool }: Props) {
         </table>
       </div>
 
-      {showCreate && (
+      {showCreate && userName && (
         <CreatePoolModal
           onClose={() => setShowCreate(false)}
           onCreated={(pool) => {
@@ -121,10 +137,11 @@ export default function Pools({ onOpenPool }: Props) {
             fetchPools();
             setTimeout(() => setMessage(null), 3000);
           }}
+          currentUser={userName}
         />
       )}
 
-      {joinPoolId && (
+      {joinPoolId && userName && (
         <JoinPoolModal
           poolId={joinPoolId}
           onClose={() => setJoinPoolId(null)}
@@ -133,6 +150,7 @@ export default function Pools({ onOpenPool }: Props) {
             fetchPools();
             setTimeout(() => setMessage(null), 3000);
           }}
+          currentUser={userName}
         />
       )}
     </div>

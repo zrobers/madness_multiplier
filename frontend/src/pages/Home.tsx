@@ -31,6 +31,7 @@ export default function HomePage() {
     const state = location.state as { userName?: string } | null;
     if (state?.userName) {
       setUserName(state.userName);
+      console.log(userName);
     }
   }, [location.state]);
 
@@ -43,6 +44,7 @@ export default function HomePage() {
         setUserName(null);
       }
     });
+    console.log(userName);
     return () => unsubscribe();
   }, []);
 
@@ -126,7 +128,7 @@ export default function HomePage() {
             <aside className="left">
               <Leaderboard />
               <div style={{ height: 12 }} />
-              <Pools onOpenPool={openPoolDetail} />
+              <Pools onOpenPool={openPoolDetail} userName={userName}/>
             </aside>
             <div className="centerSpacer" aria-hidden />
             <aside className="right">
