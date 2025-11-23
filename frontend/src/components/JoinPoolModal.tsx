@@ -44,7 +44,10 @@ export default function JoinPoolModal({ poolId, onClose, onJoined, currentUser }
   return (
     <div className="modal-backdrop">
       <div className="modal card">
-        <div className="lbHeader">Join Pool</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="lbHeader" style={{ margin: 0, padding: 12 }}>Join Pool</div>
+          <button className="close-x" aria-label="Close" onClick={onClose}>✕</button>
+        </div>
         <form onSubmit={handleSubmit} style={{ padding: 12 }}>
           {currentUser ? (
             <div style={{ marginBottom: 8 }}>

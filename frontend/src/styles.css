@@ -1523,6 +1523,120 @@ body {
   .member-right { min-width: 86px; font-size: 0.85rem; }
   .pool-detail-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ---------- Modal & input refinements ---------- */
+
+/* backdrop that darkens everything behind the modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+/* modal card centered with nice sizing and subtle enter animation */
+.modal {
+  max-width: 540px;
+  width: 100%;
+  border-radius: 12px;
+  overflow: visible;
+  box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+  transform-origin: center;
+  animation: modalPop 160ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* small pop-in */
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(6px) scale(.99); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* inputs used across modals & forms */
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e5e7eb);
+  background: #ffffff;
+  font-size: 0.95rem;
+  transition: box-shadow .12s ease, border-color .12s ease;
+  box-shadow: none;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.08);
+  background: #fff;
+}
+
+/* modal header: consistent title + close (component side adds the 'modal-header' content) */
+.modal .lbHeader {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 1.15rem;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+/* small close button (use within modal header) */
+.modal .close-x {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+}
+.modal .close-x:hover {
+  background: rgba(15,23,42,0.04);
+}
+
+/* make primary/secondary buttons slightly larger and consistent in modals */
+.modal .btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+/* center the form actions on small screens */
+@media (max-width: 480px) {
+  .modal { padding: 0 8px; }
+  .modal .card { border-radius: 12px; }
+}
+
+/* ---------- PoolDetail: let it expand into main area ---------- */
+/* When belowGrid has the 'pool-detail' modifier, force single column layout so child can stretch */
+.belowGrid.pool-detail {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+/* make the PoolDetail card more airy when it is displayed in the main area */
+.belowGrid.pool-detail .pool-detail.card {
+  max-width: 980px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  border-radius: 12px;
+}
+
+/* a minor spacing/visual polish for the members / wagers tables inside pool details */
+.pool-detail.card h3 { margin-top: 18px; margin-bottom: 8px; }
+.pool-detail .lbTable { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.pool-detail .lbTable thead th { background: #f8fafc; font-weight: 700; }
+.pool-detail .lbTable tbody td { background: #fff; }
+
+/* keep mobile friendly */
+@media (max-width: 900px) {
+  .belowGrid.pool-detail .pool-detail.card { padding: 12px; margin: 8px; }
+}
+
+
 /* --- INTERACTIVE BRACKET ADDITIONS --- */
 
 .team {

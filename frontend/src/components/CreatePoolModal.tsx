@@ -49,7 +49,10 @@ export default function CreatePoolModal({ onClose, onCreated, currentUser }: Pro
   return (
     <div className="modal-backdrop">
       <div className="modal card">
-        <div className="lbHeader">Create Pool</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="lbHeader" style={{ margin: 0, padding: 12 }}>Create Pool</div>
+          <button className="close-x" aria-label="Close" onClick={onClose}>✕</button>
+        </div>
         <form onSubmit={handleSubmit} style={{ padding: 12 }}>
           <div style={{ marginBottom: 8 }}>
             <label>Pool name</label>

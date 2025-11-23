@@ -151,8 +151,7 @@ export default function HomePage() {
       )}
 
       {activeTab === 'pool-detail' && selectedPoolId && (
-        // show pool detail inline in Home (no new route)
-        <section className="belowGrid">
+        <section className="belowGrid pool-detail">
           <div style={{ width: '100%' }}>
             <PoolDetail poolId={selectedPoolId} onBack={() => setActiveTab('home')} />
           </div>
