@@ -381,7 +381,7 @@ export default function Bracket() {
 
   return (
     <div className="card">
-      <div className="cardTitle">Tournament Bracket</div>
+      <div className="lbHeader">TOURNAMENT BRACKET</div>
 
       {/* inline wager / details panel */}
       {selectedMatch && (
