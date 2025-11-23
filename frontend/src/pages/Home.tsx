@@ -31,7 +31,6 @@ export default function HomePage() {
     const state = location.state as { userName?: string } | null;
     if (state?.userName) {
       setUserName(state.userName);
-      console.log(userName);
     }
   }, [location.state]);
 
@@ -44,7 +43,6 @@ export default function HomePage() {
         setUserName(null);
       }
     });
-    console.log(userName);
     return () => unsubscribe();
   }, []);
 

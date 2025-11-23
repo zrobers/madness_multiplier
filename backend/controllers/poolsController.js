@@ -1,10 +1,10 @@
 import { query } from "../db/index.js";
 
-async function findUserByHandle(handle) {
-  if (!handle) throw new Error('handle required');
-  const selRes = await query(`SELECT user_id, handle FROM mm.users WHERE handle = $1`, [handle]);
+async function findUserByEmail(email) {
+  if (!email) throw new Error('email required');
+  const selRes = await query(`SELECT user_id, email FROM mm.users WHERE email = $1`, [email]);
   if (!selRes.rows.length) return null;
-  return { user_id: selRes.rows[0].user_id, handle: selRes.rows[0].handle };
+  return { user_id: selRes.rows[0].user_id, email: selRes.rows[0].email };
 }
 
 export async function getAllPools(req, res) {
@@ -114,7 +114,7 @@ export async function createPool(req, res) {
     );
 
     // Look up user by handle
-    const owner = await findUserByHandle(owner_handle);
+    const owner = await findUserByEmail(owner_handle);
     if (!owner) {
       return res.status(400).json({ error: 'owner handle does not exist. Please sign up or choose an existing handle.' });
     }
@@ -153,7 +153,7 @@ export async function joinPool(req, res) {
     if (!poolCheck.rows.length) return res.status(404).json({ error: 'Pool not found' });
 
     // Require user exists
-    const user = await findUserByHandle(handle);
+    const user = await findUserByEmail(handle);
     if (!user) {
       return res.status(400).json({ error: 'handle does not exist. Please sign up first.' });
     }
