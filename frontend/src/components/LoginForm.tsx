@@ -17,8 +17,14 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/");
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const user = cred.user;
+
+      const userName = user.displayName || user.email || "";
+
+      navigate("/", {
+        state: { userName },
+      });
     } catch (err: any) {
       setError(err.message || "Failed to log in");
     } finally {
@@ -60,11 +66,7 @@ export default function LoginForm() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="auth-button"
-        disabled={loading}
-      >
+      <button type="submit" className="auth-button" disabled={loading}>
         {loading ? "Logging in..." : "Login"}
       </button>
     </form>

@@ -70,12 +70,22 @@ body {
   border: 1px solid var(--border);
   background: #fff;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .tab.active {
   background: #0f172a;
   color: #fff;
   border-color: #0f172a;
+}
+
+.user-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 500;
 }
 
 /* ---------------- Layout (per sketch) ---------------- */
