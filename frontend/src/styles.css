@@ -70,12 +70,22 @@ body {
   border: 1px solid var(--border);
   background: #fff;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .tab.active {
   background: #0f172a;
   color: #fff;
   border-color: #0f172a;
+}
+
+.user-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 500;
 }
 
 /* ---------------- Layout (per sketch) ---------------- */
@@ -282,6 +292,78 @@ body {
   font-size: 12px;
 }
 
+/* ---------- Auth Forms ---------- */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.auth-input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+  background: #f9fafb;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+  background: #ffffff;
+}
+
+.auth-button {
+  margin-top: 4px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2563eb;
+  color: #ffffff;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.auth-button:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.auth-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  font-size: 0.85rem;
+  color: #b91c1c;
+}
+
 /* ---------------- Tournament Bracket Styles ---------------- */
 .bracket-full-width {
   width: 100%;
@@ -289,17 +371,19 @@ body {
 }
 
 .bracket-container {
-  padding: 16px;
-  overflow-x: auto;
+  padding: 16px 24px 24px;
   background: #fff;
   width: 100%;
+  display: flex;
+  justify-content: center;   /* center the grid */
 }
 
 .bracket-layout {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  min-width: 1600px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  gap: 24px 32px;                                  
+  max-width: 1300px;                       
+  width: 100%;
 }
 
 .bracket-region {
@@ -357,9 +441,14 @@ body {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+  cursor: pointer;
   padding: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.bracket-match:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
 }
 
 .bracket-match.scheduled {
@@ -450,7 +539,7 @@ body {
 }
 
 /* Responsive adjustments */
-@media (max-width: 1600px) {
+@media (max-width: 1800px) {
   .bracket-layout {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -514,6 +603,28 @@ body {
   font-size: 12px;
   color: #64748b;
   border-top: 1px solid var(--border);
+}
+
+.finals-container {
+  padding: 0 24px 24px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.finals-title {
+  margin: 16px 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  color: #111827;
+}
+
+.finals-rounds {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 /* ---------------- Wager Placement Styles ---------------- */
@@ -1411,4 +1522,293 @@ body {
   .avatar { width: 30px; height: 30px; font-size: 0.85rem; }
   .member-right { min-width: 86px; font-size: 0.85rem; }
   .pool-detail-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+/* --- INTERACTIVE BRACKET ADDITIONS --- */
+
+.team {
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+              border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.team:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15,23,42,0.12);
+  border-color: #c7d2fe;
+  background: #eff6ff;
+}
+
+.team.selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 1px rgba(79,70,229,0.35);
+  background: #eef2ff;
+}
+
+.team.has-wager {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.team-wager-chip {
+  margin-top: 4px;
+  margin-left: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.team-wager-chip::before {
+  content: "●";
+  font-size: 8px;
+  margin-right: 2px;
+}
+
+.bracket-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.bracket-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr);
+  gap: 16px;
+  padding: 12px 16px 16px;
+}
+
+@media (max-width: 900px) {
+  .bracket-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bracket-sidebar {
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.sidebar-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+}
+
+.sidebar-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.sidebar-field input {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.sidebar-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  padding: 6px 8px;
+}
+
+.sidebar-success {
+  color: #15803d;
+  background: #f0fdf4;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  padding: 6px 8px;
+}
+
+.primary {
+  background: #3b82f6;
+  border-radius: 999px;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.primary:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+/* ---------------- Inline Wager Panel (Compact Version) ---------------- */
+
+.inline-wager {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  margin-top: 1%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  width: 95%;
+}
+
+.inline-wager-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.inline-wager .wager-header {
+  margin-bottom: 12px;
+}
+
+.inline-wager .wager-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.inline-wager .wager-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.inline-wager .wager-row {
+  margin-top: 14px;
+}
+
+.inline-wager .wager-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+/* team options */
+.inline-wager .team-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inline-wager .team-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.inline-wager .team-option:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.inline-wager .team-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.inline-wager .team-option input[type="radio"] {
+  margin: 0;
+  accent-color: #3b82f6;
+}
+
+.inline-wager .team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inline-wager .team-info .seed {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.inline-wager .team-info .name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* amount input */
+.inline-wager .wager-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.inline-wager .wager-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* action buttons */
+.inline-wager .wager-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.inline-wager .place-wager-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.inline-wager .place-wager-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.inline-wager .place-wager-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.inline-wager .cancel-wager-btn {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.inline-wager .cancel-wager-btn:hover {
+  background: #d1d5db;
 }

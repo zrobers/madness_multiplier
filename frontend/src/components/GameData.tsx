@@ -79,7 +79,7 @@ export default function GameData() {
 
   return (
     <div className="card">
-      <div className="cardTitle">March Madness 2024</div>
+      <div className="lbHeader">MARCH MADNESS 2024</div>
       {Object.entries(gamesByRound).map(([roundCode, roundGames]) => (
         <div key={roundCode} style={{ marginBottom: '24px' }}>
           <div style={{ 
