@@ -10,13 +10,21 @@ import Pools from "../components/Pools";
 import HowItWorks from "./HowItWorks";
 import SubmitPicks from "./SubmitPicks";
 import ViewPicks from "./ViewPicks";
+import PoolDetail from "./PoolDetail";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" |  "pool-detail" |  "how-it-works">("home");
+  const [userName, setUserName] = useState<string | null>(null);
+  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
+
+  const openPoolDetail = (poolId: string) => {
+    setSelectedPoolId(poolId);
+    setActiveTab('pool-detail');
+  };
+  
   const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" | "how-it-works">("home");
-  const [userName, setUserName] = useState<string | null>(null);
 
   // 1) Pick up name passed from Login (navigate("/", { state: { userName } }))
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "how-it-works") => {
+  const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "pool-detail" |"how-it-works") => {
     setActiveTab(tab);
   };
 
@@ -118,7 +126,7 @@ export default function HomePage() {
             <aside className="left">
               <Leaderboard />
               <div style={{ height: 12 }} />
-              <Pools />
+              <Pools onOpenPool={openPoolDetail} userName={userName}/>
             </aside>
             <div className="centerSpacer" aria-hidden />
             <aside className="right">
@@ -130,9 +138,25 @@ export default function HomePage() {
         </>
       )}
 
-      {activeTab === "view-picks" && <ViewPicks />}
-      {activeTab === "submit-picks" && <SubmitPicks />}
-      {activeTab === "how-it-works" && <HowItWorks />}
+      {activeTab === 'submit-picks' && (
+        <SubmitPicks />
+      )}
+
+      {activeTab === 'how-it-works' && (
+        <HowItWorks />
+      )}
+      
+      {activeTab === 'how-it-works' && (
+        <HowItWorks />
+      )}
+
+      {activeTab === 'pool-detail' && selectedPoolId && (
+        <section className="belowGrid pool-detail">
+          <div style={{ width: '100%' }}>
+            <PoolDetail poolId={selectedPoolId} onBack={() => setActiveTab('home')} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

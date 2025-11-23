@@ -1,85 +1,178 @@
-// Controller-layer functions for Pools endpoints.
-
 import { query } from "../db/index.js";
 
-/**
- * Return a list of pools with basic metadata (owner handle, member_count).
- * Keeps the SQL here so tests can call the function without Express.
- */
-export async function getAllPools(reqOrOpts = {}) {
-  const sql = `
-    SELECT
-      p.pool_id,
-      p.name,
-      NULL AS owner_user_id,
-      'Admin' AS owner_handle,
-      2024 AS season_year,
-      1000 AS initial_points,
-      20.0 AS unbet_penalty_pct,
-      true AS allow_multi_bets,
-      NOW() AS created_at,
-      COALESCE(pm.member_count, 0) AS member_count
-    FROM mm.pools p
-    LEFT JOIN (
-      SELECT pool_id, COUNT(*) AS member_count
-      FROM mm.pool_members
-      GROUP BY pool_id
-    ) pm ON pm.pool_id = p.pool_id
-    ORDER BY p.pool_id DESC
-    LIMIT 500;
-  `;
-
-  const result = await query(sql);
-  return result.rows;
+async function findUserByEmail(email) {
+  if (!email) throw new Error('email required');
+  const selRes = await query(`SELECT user_id, email FROM mm.users WHERE email = $1`, [email]);
+  if (!selRes.rows.length) return null;
+  return { user_id: selRes.rows[0].user_id, email: selRes.rows[0].email };
 }
 
-/**
- * Return a single pool by id, plus a list of members.
- * Throws an Error with 'not-found' code when missing.
- */
-export async function getPoolById(poolId) {
-  // Basic validation: ensure poolId looks like a UUID (simple check)
-  if (!poolId || typeof poolId !== "string" || !/^[0-9a-fA-F-]{36}$/.test(poolId)) {
-    const err = new Error("Invalid pool id");
-    err.code = "invalid-id";
-    throw err;
+export async function getAllPools(req, res) {
+  try {
+    const sql = `
+      SELECT p.pool_id, p.name, p.season_year, p.initial_points, p.unbet_penalty_pct,
+             p.allow_multi_bets, p.created_at,
+             u.user_id AS owner_user_id, u.handle AS owner_handle,
+             COALESCE(m.member_count,0) AS member_count
+      FROM mm.pools p
+      JOIN mm.users u ON u.user_id = p.owner_user_id
+      LEFT JOIN (
+        SELECT pool_id, COUNT(*)::int AS member_count FROM mm.pool_members GROUP BY pool_id
+      ) m ON m.pool_id = p.pool_id
+      ORDER BY p.created_at DESC
+    `;
+    const result = await query(sql);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getAllPools error', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
+}
 
-  const poolSql = `
-    SELECT p.pool_id,
-           p.name,
-           p.owner_user_id,
-           u.handle AS owner_handle,
-           p.season_year,
-           p.initial_points,
-           p.unbet_penalty_pct,
-           p.allow_multi_bets,
-           p.created_at
-    FROM mm.pools p
-    JOIN mm.users u ON u.user_id = p.owner_user_id
-    WHERE p.pool_id = $1
-    LIMIT 1;
-  `;
+export async function getPoolById(req, res) {
+  const { id } = req.params;
+  try {
+    // pool + owner
+    const poolSql = `
+      SELECT p.*, u.handle AS owner_handle
+      FROM mm.pools p
+      JOIN mm.users u ON u.user_id = p.owner_user_id
+      WHERE p.pool_id = $1
+    `;
+    const poolRes = await query(poolSql, [id]);
+    if (!poolRes.rows.length) return res.status(404).json({ error: 'Pool not found' });
+    const pool = poolRes.rows[0];
 
-  const membersSql = `
-    SELECT pm.user_id, u.handle, u.initials, pm.joined_at
-    FROM mm.pool_members pm
-    JOIN mm.users u ON u.user_id = pm.user_id
-    WHERE pm.pool_id = $1
-    ORDER BY pm.joined_at ASC;
-  `;
+    // members
+    const membersSql = `
+      SELECT pm.user_id, u.handle, pm.joined_at
+      FROM mm.pool_members pm
+      JOIN mm.users u ON u.user_id = pm.user_id
+      WHERE pm.pool_id = $1
+      ORDER BY pm.joined_at ASC
+    `;
+    const membersRes = await query(membersSql, [id]);
+    const members = membersRes.rows;
 
-  const poolRes = await query(poolSql, [poolId]);
-  if (!poolRes.rows.length) {
-    const err = new Error("Pool not found");
-    err.code = "not-found";
-    throw err;
+    // wagers for this pool, joined to user, game and team names
+    const wagersSql = `
+      SELECT
+        w.wager_id,
+        w.pool_id,
+        w.user_id,
+        u.handle,
+        w.game_id,
+        g.team_a_id,
+        g.team_b_id,
+        g.start_time_utc,
+        w.picked_team_id,
+        CASE
+          WHEN w.picked_team_id = g.team_a_id THEN ta.team_name
+          WHEN w.picked_team_id = g.team_b_id THEN tb.team_name
+          ELSE NULL END AS picked_team_name,
+        CASE
+          WHEN w.picked_team_id = g.team_a_id THEN tb.team_name
+          WHEN w.picked_team_id = g.team_b_id THEN ta.team_name
+          ELSE NULL END AS opp_team_name,
+        w.picked_seed,
+        w.opp_seed,
+        w.stake_points,
+        w.posted_odds,
+        w.placed_at,
+        w.status,
+        w.settled_at,
+        w.payout_points
+      FROM mm.wagers w
+      JOIN mm.users u ON u.user_id = w.user_id
+      JOIN mm.games g ON g.game_id = w.game_id
+      LEFT JOIN mm.teams ta ON ta.team_id = g.team_a_id
+      LEFT JOIN mm.teams tb ON tb.team_id = g.team_b_id
+      WHERE w.pool_id = $1
+      ORDER BY u.handle, w.placed_at ASC
+    `;
+    const wagersRes = await query(wagersSql, [id]);
+    const wagers = wagersRes.rows;
+
+    return res.json({ pool, members, wagers });
+  } catch (err) {
+    console.error('getPoolById error', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
+}
 
-  const membersRes = await query(membersSql, [poolId]);
-  const pool = poolRes.rows[0];
-  // attach members as an array (empty if none)
-  pool.members = membersRes.rows || [];
+export async function createPool(req, res) {
+  try {
+    const { name, season_year, initial_points, unbet_penalty_pct, allow_multi_bets, owner_handle } = req.body;
+    if (!name || !season_year || !owner_handle) {
+      return res.status(400).json({ error: 'name, season_year and owner_handle are required' });
+    }
 
-  return pool;
+    // Ensure the tournament (season) exists. Insert if missing.
+    await query(
+      `INSERT INTO mm.tournaments (season_year) VALUES ($1) ON CONFLICT DO NOTHING`,
+      [season_year]
+    );
+
+    // Look up user by handle
+    const owner = await findUserByEmail(owner_handle);
+    if (!owner) {
+      return res.status(400).json({ error: 'owner handle does not exist. Please sign up or choose an existing handle.' });
+    }
+
+    // Insert pool with the existing owner_user_id
+    const sql = `
+      INSERT INTO mm.pools (name, owner_user_id, season_year, initial_points, unbet_penalty_pct, allow_multi_bets)
+      VALUES ($1, $2, $3, COALESCE($4,1000), COALESCE($5,20.00), COALESCE($6, TRUE))
+      RETURNING pool_id, name, season_year, initial_points, unbet_penalty_pct, allow_multi_bets, created_at
+    `;
+    const params = [name, owner.user_id, season_year, initial_points, unbet_penalty_pct, allow_multi_bets];
+    const insertRes = await query(sql, params);
+    const pool = insertRes.rows[0];
+
+    // add owner as member (owner must already be a user)
+    await query(
+      `INSERT INTO mm.pool_members (pool_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [pool.pool_id, owner.user_id]
+    );
+
+    return res.status(201).json({ pool, owner_handle: owner.handle });
+  } catch (err) {
+    console.error('createPool error', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function joinPool(req, res) {
+  try {
+    const { id } = req.params; // pool_id
+    const { handle } = req.body;
+    if (!handle) return res.status(400).json({ error: 'handle is required to join' });
+
+    // ensure pool exists
+    const poolCheck = await query(`SELECT pool_id FROM mm.pools WHERE pool_id = $1`, [id]);
+    if (!poolCheck.rows.length) return res.status(404).json({ error: 'Pool not found' });
+
+    // Require user exists
+    const user = await findUserByEmail(handle);
+    if (!user) {
+      return res.status(400).json({ error: 'handle does not exist. Please sign up first.' });
+    }
+
+    const insertSql = `
+      INSERT INTO mm.pool_members (pool_id, user_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
+      RETURNING pool_id, user_id, joined_at
+    `;
+    const insertRes = await query(insertSql, [id, user.user_id]);
+    if (!insertRes.rows.length) {
+      // already a member
+      return res.json({ message: 'Already a member', pool_id: id, user_id: user.user_id });
+    }
+
+    return res.status(201).json({ message: 'Joined pool', pool_id: id, user_id: user.user_id });
+  } catch (err) {
+    console.error('joinPool error', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
