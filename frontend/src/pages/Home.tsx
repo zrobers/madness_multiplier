@@ -7,13 +7,20 @@ import Pools from "../components/Pools";
 import HowItWorks from "./HowItWorks";
 import SubmitPicks from "./SubmitPicks";
 import ViewPicks from "./ViewPicks";
+import PoolDetail from "./PoolDetail";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+  };
+
+  const openPoolDetail = (poolId: string) => {
+    setSelectedPoolId(poolId);
+    setActiveTab('pool-detail');
   };
   
   return (
@@ -71,7 +78,7 @@ export default function HomePage() {
             <aside className="left">
               <Leaderboard />
               <div style={{ height: 12 }} />
-              <Pools />
+              <Pools onOpenPool={openPoolDetail} />
             </aside>
             <div className="centerSpacer" aria-hidden />
             <aside className="right">
@@ -96,6 +103,15 @@ export default function HomePage() {
       
       {activeTab === 'how-it-works' && (
         <HowItWorks />
+      )}
+
+      {activeTab === 'pool-detail' && selectedPoolId && (
+        // show pool detail inline in Home (no new route)
+        <section className="belowGrid">
+          <div style={{ width: '100%' }}>
+            <PoolDetail poolId={selectedPoolId} onBack={() => setActiveTab('home')} />
+          </div>
+        </section>
       )}
     </div>
   );

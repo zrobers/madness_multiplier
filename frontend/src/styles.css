@@ -1248,3 +1248,167 @@ body {
     flex-direction: column;
   }
 }
+
+/* ---------------- PoolDetail styles ---------------- */
+/* Container card */
+.pool-detail.card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e6e9ee);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
+
+/* Header row: title + meta + actions */
+.pool-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pool-detail-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink, #111827);
+}
+
+.pool-meta {
+  color: var(--muted, #6b7280);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+/* Action area (back, join, etc.) */
+.pool-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Simple button styling consistent with app */
+.btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e6e9ee);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.btn.secondary {
+  background: #f8fafc;
+}
+
+.btn.primary {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+/* Settings list (dl layout) */
+.pool-settings .settings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pool-settings .setting {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e6e9ee);
+  background: #fff;
+}
+
+.setting-key {
+  color: var(--muted, #6b7280);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.setting-value {
+  margin-top: 6px;
+  font-weight: 700;
+  color: var(--ink, #111827);
+}
+
+/* Members list */
+.members-section {
+  margin-top: 16px;
+}
+
+.members-list {
+  list-style: none;
+  margin: 8px 0 0 0;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border, #e6e9ee);
+  background: #fff;
+}
+
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border, #f1f5f9);
+}
+
+.member-row:last-child { border-bottom: none; }
+
+.member-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Avatar circle for initials */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #0f172a;
+  background: #eef2ff;
+  border: 1px solid #e6eefc;
+  flex-shrink: 0;
+}
+
+.member-handle {
+  font-weight: 700;
+  color: var(--ink, #111827);
+}
+
+.member-right {
+  text-align: right;
+  color: var(--muted, #6b7280);
+  font-size: 0.9rem;
+  min-width: 110px;
+}
+
+/* empty state */
+.members-empty {
+  padding: 12px;
+  color: var(--muted, #6b7280);
+}
+
+/* small helpers */
+.muted { color: var(--muted, #6b7280); }
+.ta-right { text-align: right; }
+
+/* responsiveness */
+@media (max-width: 720px) {
+  .pool-detail.card { padding: 12px; }
+  .avatar { width: 30px; height: 30px; font-size: 0.85rem; }
+  .member-right { min-width: 86px; font-size: 0.85rem; }
+  .pool-detail-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
