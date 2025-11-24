@@ -21,15 +21,15 @@ router.post("/check-handle", async (req, res) => {
 
 // Register route — called from frontend
 router.post("/register", async (req, res) => {
-  const { uid, handle, email } = req.body;
+  const { uid, handle, email, initials } = req.body;
 
   try {
     
     const result = await pool.query(
-      `INSERT INTO mm.users (user_id, handle, email)
-       VALUES ($1, $2, $3)
+      `INSERT INTO mm.users (user_id, handle, email, initials)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [uid, handle, email]
+      [uid, handle, email, initials]
     );
 
     res.status(201).json(result.rows[0]);

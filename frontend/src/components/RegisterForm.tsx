@@ -19,8 +19,12 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      // ⭐ Build handle EXACTLY how it used to be: "First Last"
+      //Build handle EXACTLY how it used to be: "First Last"
       const handle = `${firstName} ${lastName}`.trim();
+
+      const initials =
+        (firstName[0] || "").toUpperCase() +
+        (lastName[0] || "").toUpperCase();
 
       // Check handle availability
       const handleCheck = await axios.post(
@@ -29,7 +33,7 @@ export default function RegisterForm() {
       );
 
       if (!handleCheck.data.available) {
-        setError("Handle already exists");
+        setError("Name already exists. Please add a number to last name");
         setLoading(false);
         return;
       }
@@ -48,6 +52,7 @@ export default function RegisterForm() {
         firstName,
         lastName,
         handle,
+        initials,
         email: user.email,
       });
 
