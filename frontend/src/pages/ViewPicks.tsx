@@ -24,13 +24,17 @@ interface Wager {
   isDemoData?: boolean;
 }
 
-export default function ViewPicks() {
+interface ViewPicksProps {
+  userId: string;
+  userName?: string | null;
+}
+
+export default function ViewPicks({ userId, userName }: ViewPicksProps) {
   const [wagers, setWagers] = useState<Wager[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [hasDemoData, setHasDemoData] = useState(false);
   const [poolId] = useState<string>('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66');
-  const [userId] = useState<string>('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
 
   useEffect(() => {
     fetchWagers();
