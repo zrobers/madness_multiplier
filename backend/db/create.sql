@@ -27,8 +27,9 @@ CREATE TABLE IF NOT EXISTS mm.tournaments (
 
 -- 3) Users & Pools
 CREATE TABLE IF NOT EXISTS mm.users (
-  user_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  auth0_sub   TEXT UNIQUE,
+  --user_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  --auth0_sub   TEXT UNIQUE,
+  user_id TEXT PRIMARY KEY UNIQUE,
   handle      VARCHAR(50) NOT NULL UNIQUE,
   initials    VARCHAR(6),
   email       VARCHAR(254),
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS mm.users (
 CREATE TABLE IF NOT EXISTS mm.pools (
   pool_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name               VARCHAR(80) NOT NULL,
-  owner_user_id      UUID NOT NULL REFERENCES mm.users(user_id),
+  owner_user_id      TEXT NOT NULL REFERENCES mm.users(user_id),
   season_year        SMALLINT NOT NULL REFERENCES mm.tournaments(season_year),
   initial_points     INTEGER NOT NULL DEFAULT 1000,
   unbet_penalty_pct  NUMERIC(5,2) NOT NULL DEFAULT 20.00,
@@ -48,7 +49,7 @@ CREATE TABLE IF NOT EXISTS mm.pools (
 
 CREATE TABLE IF NOT EXISTS mm.pool_members (
   pool_id   UUID NOT NULL REFERENCES mm.pools(pool_id),
-  user_id   UUID NOT NULL REFERENCES mm.users(user_id),
+  user_id   TEXT NOT NULL REFERENCES mm.users(user_id),
   joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (pool_id, user_id)
 );
@@ -80,7 +81,7 @@ CREATE INDEX IF NOT EXISTS ix_games_round ON mm.games (season_year, round_code, 
 CREATE TABLE IF NOT EXISTS mm.wagers (
   wager_id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pool_id        UUID NOT NULL REFERENCES mm.pools(pool_id),
-  user_id        UUID NOT NULL REFERENCES mm.users(user_id),
+  user_id        TEXT NOT NULL REFERENCES mm.users(user_id),
   game_id        BIGINT NOT NULL REFERENCES mm.games(game_id),
 
   picked_team_id INTEGER NOT NULL REFERENCES mm.teams(team_id),
@@ -103,7 +104,7 @@ CREATE INDEX IF NOT EXISTS ix_wagers_user ON mm.wagers (user_id, placed_at);
 CREATE TABLE IF NOT EXISTS mm.transactions (
   tx_id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pool_id        UUID NOT NULL REFERENCES mm.pools(pool_id),
-  user_id        UUID NOT NULL REFERENCES mm.users(user_id),
+  user_id        TEXT NOT NULL REFERENCES mm.users(user_id),
   round_code     SMALLINT REFERENCES mm.rounds(round_code),
 
   tx_type        TEXT NOT NULL CHECK (tx_type IN
@@ -122,7 +123,7 @@ CREATE INDEX IF NOT EXISTS ix_tx_round ON mm.transactions (pool_id, round_code, 
 CREATE TABLE IF NOT EXISTS mm.round_balance_snapshots (
   pool_id               UUID NOT NULL REFERENCES mm.pools(pool_id),
   round_code            SMALLINT NOT NULL REFERENCES mm.rounds(round_code),
-  user_id               UUID NOT NULL REFERENCES mm.users(user_id),
+  user_id               TEXT NOT NULL REFERENCES mm.users(user_id),
   start_balance_points  NUMERIC(18,2) NOT NULL,
   snap_time_utc         TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (pool_id, round_code, user_id)
@@ -131,7 +132,7 @@ CREATE TABLE IF NOT EXISTS mm.round_balance_snapshots (
 CREATE TABLE IF NOT EXISTS mm.leaderboard_snapshots (
   pool_id              UUID NOT NULL REFERENCES mm.pools(pool_id),
   round_code           SMALLINT NOT NULL REFERENCES mm.rounds(round_code),
-  user_id              UUID NOT NULL REFERENCES mm.users(user_id),
+  user_id              TEXT NOT NULL REFERENCES mm.users(user_id),
   rank_in_pool         INTEGER NOT NULL,
   points_end_of_round  NUMERIC(18,2) NOT NULL,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),

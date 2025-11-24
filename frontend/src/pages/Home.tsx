@@ -14,7 +14,7 @@ import ViewPicks from "./ViewPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" |  "pool-detail" |  "how-it-works">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" | "pool-detail" | "how-it-works">("home");
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
@@ -23,9 +23,8 @@ export default function HomePage() {
     setSelectedPoolId(poolId);
     setActiveTab('pool-detail');
   };
-  
-  const location = useLocation();
 
+  const location = useLocation();
 
   // 1) Pick up name passed from Login (navigate("/", { state: { userName } }))
   useEffect(() => {
@@ -37,17 +36,24 @@ export default function HomePage() {
 
   // 2) Listen to Firebase auth so refresh still knows who we are
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserName(user.displayName || user.email || null);
-        setUserId(user.uid);
-      } else {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
+        const data = await res.json();
+        console.log("Fetched handle:", data);
+        setUserName(data.handle); // <-- set handle from your database
+      } catch (err) {
+        console.error(err);
         setUserName(null);
         setUserId(null);
       }
-    });
-    return () => unsubscribe();
-  }, []);
+    } else {
+      setUserName(null);
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   // 3) Redirect to login if trying to access authenticated pages without being logged in
   useEffect(() => {
@@ -90,10 +96,7 @@ export default function HomePage() {
         </div>
 
         <header className="tabs">
-          <button
-            className={`tab ${activeTab === "home" ? "active" : ""}`}
-            onClick={() => handleTabClick("home")}
-          >
+          <button className={`tab ${activeTab === "home" ? "active" : ""}`} onClick={() => handleTabClick("home")}>
             Home
           </button>
           {userName && (
@@ -124,14 +127,10 @@ export default function HomePage() {
         {userName ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span className="user-pill">Hi, {userName}</span>
-            <button className="loginButton" onClick={handleLogout}>
-              Logout
-            </button>
+            <button className="loginButton" onClick={handleLogout}>Logout</button>
           </div>
         ) : (
-          <button className="loginButton" onClick={() => navigate("/login")}>
-            Login / Register
-          </button>
+          <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
         )}
       </div>
 
