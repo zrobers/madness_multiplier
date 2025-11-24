@@ -1,33 +1,64 @@
 season_year,round_code,region,game_no,start_time_utc,team_a_name,team_b_name,team_a_seed,team_b_seed,status,score_a,score_b,winner_name
 2024,1,East,1,2024-03-21 12:00:00,UConn,Stetson,1,16,FINAL,91,52,UConn
-2024,1,East,2,2024-03-21 14:30:00,Northwestern,Florida Atlantic,9,8,FINAL,77,65,Northwestern
-2024,1,East,3,2024-03-21 19:10:00,San Diego State,UAB,5,12,FINAL,69,65,San Diego State
-2024,1,East,4,2024-03-21 21:40:00,Auburn,Yale,4,13,FINAL,76,78,Yale
-2024,1,East,5,2024-03-22 12:00:00,Illinois,Morehead State,3,14,FINAL,85,69,Illinois
-2024,1,East,6,2024-03-22 14:30:00,Duquesne,BYU,11,6,FINAL,71,67,Duquesne
-2024,1,East,7,2024-03-22 19:10:00,Washington State,Drake,7,10,FINAL,66,61,Washington State
-2024,1,East,8,2024-03-22 21:40:00,Iowa State,South Dakota State,2,15,FINAL,82,65,Iowa State
 2024,1,South,1,2024-03-21 12:40:00,Houston,Longwood,1,16,FINAL,86,46,Houston
-2024,1,South,2,2024-03-21 15:10:00,Nebraska,Texas A&M,8,9,FINAL,83,98,Texas A&M
-2024,1,South,3,2024-03-21 19:40:00,Wisconsin,James Madison,5,12,FINAL,61,72,James Madison
-2024,1,South,4,2024-03-21 22:10:00,Duke,Vermont,4,13,FINAL,64,47,Duke
-2024,1,South,5,2024-03-22 12:40:00,Texas Tech,NC State,6,11,FINAL,67,80,NC State
-2024,1,South,6,2024-03-22 15:10:00,Kentucky,Oakland,3,14,FINAL,76,80,Oakland
-2024,1,South,7,2024-03-22 19:40:00,Florida,Colorado,7,10,FINAL,100,102,Colorado
-2024,1,South,8,2024-03-22 22:10:00,Marquette,Western Kentucky,2,15,FINAL,87,69,Marquette
 2024,1,West,1,2024-03-21 13:00:00,North Carolina,Wagner,1,16,FINAL,90,62,North Carolina
-2024,1,West,2,2024-03-21 15:30:00,Mississippi State,Michigan State,8,9,FINAL,51,69,Michigan State
-2024,1,West,3,2024-03-21 20:00:00,St. Mary's,Grand Canyon,5,12,FINAL,66,75,Grand Canyon
-2024,1,West,4,2024-03-21 22:30:00,Alabama,Charleston,4,13,FINAL,109,96,Alabama
-2024,1,West,5,2024-03-22 13:00:00,Baylor,Colgate,3,14,FINAL,92,67,Baylor
-2024,1,West,6,2024-03-22 15:30:00,Clemson,New Mexico,6,11,FINAL,77,56,Clemson
-2024,1,West,7,2024-03-22 20:00:00,Dayton,Nevada,7,10,FINAL,63,60,Dayton
-2024,1,West,8,2024-03-22 22:30:00,Arizona,Long Beach State,2,15,FINAL,85,65,Arizona
 2024,1,Midwest,1,2024-03-21 13:30:00,Purdue,Grambling State,1,16,FINAL,78,50,Purdue
+2024,1,East,2,2024-03-21 14:30:00,Northwestern,Florida Atlantic,9,8,FINAL,77,65,Northwestern
+2024,1,South,2,2024-03-21 15:10:00,Nebraska,Texas A&M,8,9,FINAL,83,98,Texas A&M
+2024,1,West,2,2024-03-21 15:30:00,Mississippi State,Michigan State,8,9,FINAL,51,69,Michigan State
 2024,1,Midwest,2,2024-03-21 16:00:00,Gonzaga,McNeese,5,12,FINAL,86,65,Gonzaga
+2024,1,East,3,2024-03-21 19:10:00,San Diego State,UAB,5,12,FINAL,69,65,San Diego State
+2024,1,South,3,2024-03-21 19:40:00,Wisconsin,James Madison,5,12,FINAL,61,72,James Madison
+2024,1,West,3,2024-03-21 20:00:00,St. Mary's,Grand Canyon,5,12,FINAL,66,75,Grand Canyon
 2024,1,Midwest,3,2024-03-21 20:30:00,Utah State,TCU,8,9,FINAL,88,72,Utah State
+2024,1,East,4,2024-03-21 21:40:00,Auburn,Yale,4,13,FINAL,76,78,Yale
+2024,1,South,4,2024-03-21 22:10:00,Duke,Vermont,4,13,FINAL,64,47,Duke
+2024,1,West,4,2024-03-21 22:30:00,Alabama,Charleston,4,13,FINAL,109,96,Alabama
 2024,1,Midwest,4,2024-03-21 23:00:00,Kansas,Samford,4,13,FINAL,93,89,Kansas
+2024,1,East,5,2024-03-22 12:00:00,Illinois,Morehead State,3,14,FINAL,85,69,Illinois
+2024,1,South,5,2024-03-22 12:40:00,Texas Tech,NC State,6,11,FINAL,67,80,NC State
+2024,1,West,5,2024-03-22 13:00:00,Baylor,Colgate,3,14,FINAL,92,67,Baylor
 2024,1,Midwest,5,2024-03-22 13:30:00,South Carolina,Oregon,6,11,FINAL,73,87,Oregon
+2024,1,East,6,2024-03-22 14:30:00,Duquesne,BYU,11,6,FINAL,71,67,Duquesne
+2024,1,South,6,2024-03-22 15:10:00,Kentucky,Oakland,3,14,FINAL,76,80,Oakland
+2024,1,West,6,2024-03-22 15:30:00,Clemson,New Mexico,6,11,FINAL,77,56,Clemson
 2024,1,Midwest,6,2024-03-22 16:00:00,Creighton,Akron,3,14,FINAL,77,60,Creighton
+2024,1,East,7,2024-03-22 19:10:00,Washington State,Drake,7,10,FINAL,66,61,Washington State
+2024,1,South,7,2024-03-22 19:40:00,Florida,Colorado,7,10,FINAL,100,102,Colorado
+2024,1,West,7,2024-03-22 20:00:00,Dayton,Nevada,7,10,FINAL,63,60,Dayton
 2024,1,Midwest,7,2024-03-22 20:30:00,Texas,Colorado State,7,10,FINAL,56,44,Texas
+2024,1,East,8,2024-03-22 21:40:00,Iowa State,South Dakota State,2,15,FINAL,82,65,Iowa State
+2024,1,South,8,2024-03-22 22:10:00,Marquette,Western Kentucky,2,15,FINAL,87,69,Marquette
+2024,1,West,8,2024-03-22 22:30:00,Arizona,Long Beach State,2,15,FINAL,85,65,Arizona
 2024,1,Midwest,8,2024-03-22 23:00:00,Tennessee,Saint Peter's,2,15,FINAL,83,49,Tennessee
+2024,2,East,3,2024-03-23 18:00:00,Illinois,Duquesne,3,11,FINAL,89,63,Illinois
+2024,2,East,4,2024-03-23 18:00:00,Iowa State,Washington State,2,7,FINAL,67,56,Iowa State
+2024,2,Midwest,2,2024-03-23 18:00:00,Gonzaga,Kansas,5,4,FINAL,89,68,Gonzaga
+2024,2,Midwest,3,2024-03-23 18:00:00,Creighton,Oregon,3,11,FINAL,86,73,Creighton
+2024,2,Midwest,4,2024-03-23 18:00:00,Tennessee,Texas,2,7,FINAL,62,58,Tennessee
+2024,2,South,3,2024-03-23 18:00:00,NC State,Oakland,11,14,FINAL,79,73,NC State
+2024,2,West,1,2024-03-23 18:00:00,North Carolina,Michigan State,1,9,FINAL,85,69,North Carolina
+2024,2,West,4,2024-03-23 18:00:00,Arizona,Dayton,2,7,FINAL,78,68,Arizona
+2024,2,East,1,2024-03-24 18:00:00,UConn,Northwestern,1,9,FINAL,75,58,UConn
+2024,2,East,2,2024-03-24 18:00:00,San Diego State,Yale,5,13,FINAL,85,57,San Diego State
+2024,2,Midwest,1,2024-03-24 18:00:00,Purdue,Utah State,1,8,FINAL,106,67,Purdue
+2024,2,South,1,2024-03-24 18:00:00,Houston,Texas A&M,1,9,FINAL,100,95,Houston
+2024,2,South,2,2024-03-24 18:00:00,Duke,James Madison,4,12,FINAL,93,55,Duke
+2024,2,South,4,2024-03-24 18:00:00,Marquette,Colorado,2,10,FINAL,81,77,Marquette
+2024,2,West,2,2024-03-24 18:00:00,Alabama,Grand Canyon,4,12,FINAL,72,61,Alabama
+2024,2,West,3,2024-03-24 18:00:00,Clemson,Baylor,6,3,FINAL,72,64,Clemson
+2024,3,East,1,2024-03-28 18:00:00,UConn,San Diego State,1,5,FINAL,82,52,UConn
+2024,3,East,2,2024-03-28 18:00:00,Illinois,Iowa State,3,2,FINAL,72,69,Illinois
+2024,3,West,1,2024-03-28 18:00:00,Alabama,North Carolina,4,1,FINAL,89,87,Alabama
+2024,3,West,2,2024-03-28 18:00:00,Clemson,Arizona,6,2,FINAL,77,72,Clemson
+2024,3,Midwest,1,2024-03-29 18:00:00,Purdue,Gonzaga,1,5,FINAL,80,68,Purdue
+2024,3,Midwest,2,2024-03-29 18:00:00,Tennessee,Creighton,2,3,FINAL,82,75,Tennessee
+2024,3,South,1,2024-03-29 18:00:00,Duke,Houston,4,1,FINAL,54,51,Duke
+2024,3,South,2,2024-03-29 18:00:00,NC State,Marquette,11,2,FINAL,67,58,NC State
+2024,4,East,1,2024-03-30 18:00:00,UConn,Illinois,1,3,FINAL,77,52,UConn
+2024,4,West,1,2024-03-30 18:00:00,Alabama,Clemson,4,6,FINAL,89,82,Alabama
+2024,4,Midwest,1,2024-03-31 18:00:00,Purdue,Tennessee,1,2,FINAL,72,66,Purdue
+2024,4,South,1,2024-03-31 18:00:00,NC State,Duke,11,4,FINAL,76,64,NC State
+2024,5,Final Four,1,2024-04-06 18:00:00,UConn,Alabama,1,4,FINAL,86,72,UConn
+2024,5,Final Four,2,2024-04-06 18:00:00,Purdue,NC State,1,11,FINAL,63,50,Purdue
+2024,6,Championship,1,2024-04-08 18:00:00,UConn,Purdue,1,1,FINAL,75,60,UConn
