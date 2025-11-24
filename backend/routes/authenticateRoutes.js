@@ -21,7 +21,7 @@ router.post("/check-handle", async (req, res) => {
 
 // Register route — called from frontend
 router.post("/register", async (req, res) => {
-  const { uid, name, email } = req.body;
+  const { uid, handle, email } = req.body;
 
   try {
     
@@ -29,7 +29,7 @@ router.post("/register", async (req, res) => {
       `INSERT INTO mm.users (user_id, handle, email)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [uid, name, email]
+      [uid, handle, email]
     );
 
     res.status(201).json(result.rows[0]);

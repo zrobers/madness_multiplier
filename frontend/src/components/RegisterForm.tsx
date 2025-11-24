@@ -6,7 +6,8 @@ import axios from "axios";
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,14 +19,22 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
+      // ⭐ Build handle EXACTLY how it used to be: "First Last"
+      const handle = `${firstName} ${lastName}`.trim();
 
-      const handleCheck = await axios.post("http://localhost:4000/api/auth/check-handle", { handle: name });
+      // Check handle availability
+      const handleCheck = await axios.post(
+        "http://localhost:4000/api/auth/check-handle",
+        { handle }
+      );
+
       if (!handleCheck.data.available) {
         setError("Handle already exists");
         setLoading(false);
         return;
       }
 
+      // Create Firebase user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -33,15 +42,21 @@ export default function RegisterForm() {
       );
       const user = userCredential.user;
 
+      // Register in PostgreSQL
       await axios.post("http://localhost:4000/api/auth/register", {
         uid: user.uid,
-        name,
+        firstName,
+        lastName,
+        handle,
         email: user.email,
       });
 
+      // Reset fields
       setEmail("");
       setPassword("");
-      setName("");
+      setFirstName("");
+      setLastName("");
+
       navigate("/");
 
     } catch (err: any) {
@@ -49,11 +64,9 @@ export default function RegisterForm() {
 
       if (err.code === "auth/email-already-in-use") {
         setError("Email already in use");
-      } 
-      else if (err.response?.data?.error) {
+      } else if (err.response?.data?.error) {
         setError(err.response.data.error);
-      } 
-      else {
+      } else {
         setError(err.message || "Failed to register");
       }
     } finally {
@@ -66,16 +79,31 @@ export default function RegisterForm() {
       {error && <div className="auth-error">{error}</div>}
 
       <div className="auth-field">
-        <label className="auth-label" htmlFor="register-name">
-          Full Name
+        <label className="auth-label" htmlFor="register-first-name">
+          First Name
         </label>
         <input
-          id="register-name"
+          id="register-first-name"
           type="text"
           className="auth-input"
-          placeholder="Jane Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="Jane"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="register-last-name">
+          Last Name
+        </label>
+        <input
+          id="register-last-name"
+          type="text"
+          className="auth-input"
+          placeholder="Doe"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           required
         />
       </div>
