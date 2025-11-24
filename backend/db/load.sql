@@ -23,18 +23,18 @@ FROM '/seed/teams_2024.csv'
 CSV HEADER;
 
 INSERT INTO mm.users (user_id, handle, initials, email, created_at) VALUES
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid, 'zach',    'ZR', 'zach@madness.com',   now()),
-  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22'::uuid, 'andrew',  'AT', 'andrew@madness.com', now()),
-  ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33'::uuid, 'charlie', 'CK', 'charlie@madness.com',now()),
-  ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44'::uuid, 'justin',  'JA', 'justin@madness.com', now()),
-  ('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55'::uuid, 'logan',   'LD', 'logan@madness.com',  now());
+  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'zach',    'ZR', 'zach@madness.com',   now()),
+  ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'andrew',  'AT', 'andrew@madness.com', now()),
+  ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'charlie', 'CK', 'charlie@madness.com',now()),
+  ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'justin',  'JA', 'justin@madness.com', now()),
+  ('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'logan',   'LD', 'logan@madness.com',  now());
 
 
 INSERT INTO mm.pools (pool_id, name, owner_user_id, season_year, initial_points, created_at)
 VALUES (
   'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66'::uuid,
   'Team Madness 2024',
-  'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid,
+  'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   2024,
   1000,
   now()
