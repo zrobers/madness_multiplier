@@ -6,6 +6,7 @@ import { auth } from "../firebaseConfig";
 import Bracket from "../components/Bracket";
 import GameData from "../components/GameData";
 import Leaderboard from "../components/Leaderboard";
+import LiveScores from "../components/LiveScores";
 import Pools from "../components/Pools";
 import HowItWorks from "./HowItWorks";
 import PoolDetail from "./PoolDetail";
@@ -133,6 +134,10 @@ export default function HomePage() {
                 <Bracket />
               </div>
             </aside>
+          </section>
+
+          <section style={{ marginTop: '24px', width: '100%' }}>
+            <LiveScores />
           </section>
         </>
       )}
