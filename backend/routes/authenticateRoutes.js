@@ -3,7 +3,7 @@ import pool from "../db.js";
 
 const router = express.Router();
 
-// Register route — called from frontend
+// Register route - called from frontend
 router.post("/register", async (req, res) => {
   const { uid, name, email } = req.body;
 

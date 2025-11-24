@@ -1,6 +1,6 @@
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 
 import Bracket from "../components/Bracket";
@@ -8,9 +8,8 @@ import GameData from "../components/GameData";
 import Leaderboard from "../components/Leaderboard";
 import Pools from "../components/Pools";
 import HowItWorks from "./HowItWorks";
-import SubmitPicks from "./SubmitPicks";
-import ViewPicks from "./ViewPicks";
 import PoolDetail from "./PoolDetail";
+import SubmitPicks from "./SubmitPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
