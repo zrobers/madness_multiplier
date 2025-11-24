@@ -36,7 +36,12 @@ const roundNames: Record<string, string> = {
   'FINAL': 'Championship'
 };
 
-export default function SubmitPicks() {
+interface SubmitPicksProps {
+  userId: string;
+  userName?: string | null;
+}
+
+export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -181,14 +186,22 @@ export default function SubmitPicks() {
 
   const fetchUserBalance = async () => {
     try {
-      const response = await axios.get(`http://localhost:4000/api/leaderboard?poolId=${poolId}`);
-      if (response.data && response.data.length > 0) {
-        const balance = response.data[0].current_points;
-        setUserBalance(typeof balance === 'number' ? balance : parseFloat(balance) || 0);
+      const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
+        params: { poolId },
+        headers: {
+          'X-User-Id': userId,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && typeof response.data.balance === 'number') {
+        setUserBalance(response.data.balance);
+      } else {
+        setUserBalance(0);
       }
     } catch (err) {
       console.error('Error fetching user balance:', err);
-      setUserBalance(1000); // Default balance if API fails
+      setUserBalance(0); // Default to 0 if API fails
     }
   };
 
@@ -295,11 +308,12 @@ export default function SubmitPicks() {
               poolId,
               gameId: wager.gameId,
               teamId: wager.teamId,
-              amount: wager.amount
+              amount: wager.amount,
+              userName: userName
             }, {
               headers: {
                 'Content-Type': 'application/json',
-                'X-User-Id': 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' // DEV user ID (zach)
+                'X-User-Id': userId
               }
             });
             return response.data;
@@ -353,7 +367,12 @@ export default function SubmitPicks() {
         <div className="balance-info">
           <p>Your Balance: <strong>{typeof userBalance === 'number' ? userBalance.toFixed(2) : '0.00'} points</strong></p>
           <p>Total Wagered: <strong>{calculateTotalWagered().toFixed(2)} points</strong></p>
-          <p>Remaining: <strong>{((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()).toFixed(2)} points</strong></p>
+          <p style={{
+            color: ((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()) < 50 ? '#dc2626' : '#059669',
+            fontWeight: 'bold'
+          }}>
+            Remaining: <strong>{((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()).toFixed(2)} points</strong>
+          </p>
         </div>
 
         <div className="wager-instructions">

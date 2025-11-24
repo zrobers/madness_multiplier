@@ -10,11 +10,13 @@ import Pools from "../components/Pools";
 import HowItWorks from "./HowItWorks";
 import PoolDetail from "./PoolDetail";
 import SubmitPicks from "./SubmitPicks";
+import ViewPicks from "./ViewPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" |  "pool-detail" |  "how-it-works">("home");
   const [userName, setUserName] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
 
   const openPoolDetail = (poolId: string) => {
@@ -38,14 +40,28 @@ export default function HomePage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserName(user.displayName || user.email || null);
+        setUserId(user.uid);
       } else {
         setUserName(null);
+        setUserId(null);
       }
     });
     return () => unsubscribe();
   }, []);
 
+  // 3) Redirect to login if trying to access authenticated pages without being logged in
+  useEffect(() => {
+    if ((activeTab === "view-picks" || activeTab === "submit-picks") && !userName) {
+      navigate("/login");
+    }
+  }, [activeTab, userName, navigate]);
+
   const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "pool-detail" |"how-it-works") => {
+    // Require authentication for view-picks and submit-picks
+    if ((tab === "view-picks" || tab === "submit-picks") && !userName) {
+      navigate("/login");
+      return;
+    }
     setActiveTab(tab);
   };
 
@@ -80,18 +96,22 @@ export default function HomePage() {
           >
             Home
           </button>
-          <button
-            className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
-            onClick={() => handleTabClick("view-picks")}
-          >
-            View Picks
-          </button>
-          <button
-            className={`tab ${activeTab === "submit-picks" ? "active" : ""}`}
-            onClick={() => handleTabClick("submit-picks")}
-          >
-            Submit Picks
-          </button>
+          {userName && (
+            <>
+              <button
+                className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
+                onClick={() => handleTabClick("view-picks")}
+              >
+                View Picks
+              </button>
+              <button
+                className={`tab ${activeTab === "submit-picks" ? "active" : ""}`}
+                onClick={() => handleTabClick("submit-picks")}
+              >
+                Submit Picks
+              </button>
+            </>
+          )}
           <button
             className={`tab ${activeTab === "how-it-works" ? "active" : ""}`}
             onClick={() => handleTabClick("how-it-works")}
@@ -137,14 +157,14 @@ export default function HomePage() {
         </>
       )}
 
-      {activeTab === 'submit-picks' && (
-        <SubmitPicks />
+      {activeTab === 'view-picks' && userId && (
+        <ViewPicks userId={userId} userName={userName} />
       )}
 
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
+      {activeTab === 'submit-picks' && userId && (
+        <SubmitPicks userId={userId} userName={userName} />
       )}
-      
+
       {activeTab === 'how-it-works' && (
         <HowItWorks />
       )}
