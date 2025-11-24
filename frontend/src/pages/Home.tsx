@@ -35,16 +35,26 @@ export default function HomePage() {
   }, [location.state]);
 
   // 2) Listen to Firebase auth so refresh still knows who we are
+  const [handle, setHandle] = useState<string | null>(null);
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setUserName(user.displayName || user.email || null);
+        try {
+          const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
+          const data = await res.json();
+          setHandle(data.handle); // mm.users.handle
+        } catch (err) {
+          console.error(err);
+          setHandle(null);
+        }
       } else {
-        setUserName(null);
+        setHandle(null);
       }
     });
     return () => unsubscribe();
   }, []);
+
 
   const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "pool-detail" |"how-it-works") => {
     setActiveTab(tab);
@@ -102,9 +112,9 @@ export default function HomePage() {
         </header>
 
         {/* Right side: either Login/Register or user pill + logout */}
-        {userName ? (
+        {handle ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span className="user-pill">Hi, {userName}</span>
+            <span className="user-pill">Hi, {handle}</span>
             <button className="loginButton" onClick={handleLogout}>
               Logout
             </button>
@@ -114,6 +124,7 @@ export default function HomePage() {
             Login / Register
           </button>
         )}
+
       </div>
 
       {activeTab === "home" && (

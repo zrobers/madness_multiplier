@@ -18,6 +18,14 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
+
+      const handleCheck = await axios.post("http://localhost:4000/api/auth/check-handle", { handle: name });
+      if (!handleCheck.data.available) {
+        setError("Handle already exists");
+        setLoading(false);
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -35,9 +43,19 @@ export default function RegisterForm() {
       setPassword("");
       setName("");
       navigate("/");
+
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to register");
+
+      if (err.code === "auth/email-already-in-use") {
+        setError("Email already in use");
+      } 
+      else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } 
+      else {
+        setError(err.message || "Failed to register");
+      }
     } finally {
       setLoading(false);
     }
