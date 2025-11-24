@@ -38,18 +38,27 @@ export default function HomePage() {
   useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
+      setUserId(user.uid);
+      // Set initial userName from Firebase (display name or email)
+      setUserName(user.displayName || user.email || 'User');
+
+      // Try to fetch updated handle from backend (don't fail if backend is down)
       try {
         const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
-        const data = await res.json();
-        console.log("Fetched handle:", data);
-        setUserName(data.handle); // <-- set handle from your database
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Fetched handle:", data);
+          if (data.handle) {
+            setUserName(data.handle); // Update with database handle if available
+          }
+        }
       } catch (err) {
-        console.error(err);
-        setUserName(null);
-        setUserId(null);
+        console.error("Could not fetch user handle from backend:", err);
+        // Keep the Firebase display name - don't set to null
       }
     } else {
       setUserName(null);
+      setUserId(null);
     }
   });
   return () => unsubscribe();
