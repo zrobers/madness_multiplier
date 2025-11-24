@@ -1,12 +1,15 @@
 // server.js
-import dotenv from "dotenv"; dotenv.config();
-import express from "express"; import cors from "cors"; import helmet from "helmet";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import helmet from "helmet";
+dotenv.config();
 
-import leaderboardRoutes from "./routes/leaderboardRoutes.js";
-import wagersRoutes from "./routes/wagersRoutes.js";
 import authRoutes from "./routes/authenticateRoutes.js";
-import poolsRoutes from "./routes/poolsRoutes.js";
 import gamesRoutes from "./routes/gamesRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import poolsRoutes from "./routes/poolsRoutes.js";
+import wagersRoutes from "./routes/wagersRoutes.js";
 
 const app = express();
 app.use(helmet());
@@ -27,10 +30,7 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use("/api/leaderboard", leaderboardRoutes);        // GET /api/leaderboard?poolId=UUID
 app.use("/api/pools", poolsRoutes); // GET /api/pools/:poolId
 app.use("/api/games", gamesRoutes);                    // GET /api/games?season=2024
-app.use("/api/wagers", (req, res, next) => {
-  if (!req.user?.id) return res.status(401).json({ error: "Unauthenticated" });
-  next();
-}, wagersRoutes);                                       // POST /api/wagers
+app.use("/api/wagers", wagersRoutes);                                       // POST /api/wagers
 
 app.use("/api/auth", authRoutes);
 

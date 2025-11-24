@@ -98,10 +98,14 @@ export default function Bracket() {
   // ---------- transform raw games -> bracket matches ----------
 
   const createBracketMatches = (): BracketMatch[] => {
+    console.log('Creating bracket matches for', games.length, 'total games');
     const bracketMatches: BracketMatch[] = [];
 
-    // existing games from DB
-    games.forEach((game) => {
+    // Only add Round of 64 games from DB (avoid duplicates with synthetic Round of 32)
+    const round64Games = games.filter((game) => game.round_code === 1);
+    console.log('Found', round64Games.length, 'Round of 64 games to display');
+
+    round64Games.forEach((game) => {
       const isFinal = game.status === "FINAL";
       const winnerId = isFinal ? game.winner_team_id : null;
 
@@ -130,7 +134,7 @@ export default function Bracket() {
     });
 
     // Generate Round of 32 from Round of 64 winners (round_code === 1)
-    const round64Games = games.filter((g) => g.round_code === 1);
+    // Note: We already filtered round64Games above for adding to bracketMatches
     const round64Winners = round64Games
       .filter((g) => g.status === "FINAL" && g.winner_team_id)
       .map((g) => ({
@@ -150,13 +154,18 @@ export default function Bracket() {
       {} as Record<string, typeof round64Winners>
     );
 
+    console.log('Winners by region:', Object.keys(winnersByRegion));
+
     Object.entries(winnersByRegion).forEach(([region, winners]) => {
       const sorted = winners.sort((a, b) => a.gameNo - b.gameNo);
+      console.log(`Region ${region}: ${winners.length} winners, creating ${Math.floor(winners.length / 2)} Round of 32 games`);
 
       for (let i = 0; i < sorted.length; i += 2) {
         if (i + 1 >= sorted.length) break;
         const teamA = sorted[i];
         const teamB = sorted[i + 1];
+
+        console.log(`Creating R32 game: ${region} Game ${Math.floor(i / 2) + 1} - ${teamA.name} vs ${teamB.name}`);
 
         bracketMatches.push({
           id: 10000 + region.charCodeAt(0) * 100 + i,
@@ -182,12 +191,13 @@ export default function Bracket() {
       }
     });
 
+    console.log('Total bracket matches created:', bracketMatches.length);
     return bracketMatches;
   };
 
   const allMatches = createBracketMatches();
 
-  // split regional (rounds 1–4) vs finals (5–6)
+  // split regional (rounds 1-4) vs finals (5-6)
   const regionalMatches = allMatches.filter((m) => m.round <= 4);
   const finalsMatches = allMatches.filter((m) => m.round >= 5);
 

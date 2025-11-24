@@ -645,16 +645,30 @@ body {
 }
 
 .balance-info {
-  background: #f8fafc;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .balance-info p {
-  margin: 0;
-  font-size: 0.9rem;
+  margin: 4px 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.balance-info p:first-child {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.balance-info p:last-child {
+  color: #059669;
+  font-weight: 600;
 }
 
 .wager-form {
