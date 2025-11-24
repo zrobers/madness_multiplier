@@ -36,6 +36,7 @@ app.use("/api/wagers", (req, res, next) => {
   if (!req.user?.id) return res.status(401).json({ error: "Unauthenticated" });
   next();
 }, wagersRoutes);                                       // POST /api/wagers
+app.use("/api/wagers", wagersRoutes);                                       // POST /api/wagers
 
 app.use("/api/auth", authRoutes);
 
