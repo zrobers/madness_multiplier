@@ -12,7 +12,7 @@ export default function App() {
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
-  // ✅ Track Firebase login state
+  // Track Firebase login state
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -26,7 +26,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* If user logged in → show HomePage, else redirect */}
+        {/* If user logged in, show HomePage, else redirect */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage />} />

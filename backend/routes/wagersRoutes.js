@@ -147,7 +147,7 @@ r.post("/", validators, async (req, res) => {
 
     // Record the wager stake as a transaction (negative amount)
     await query(
-      `INSERT INTO mm.transactions 
+      `INSERT INTO mm.transactions
          (pool_id, user_id, tx_type, amount_points, wager_id, game_id, notes)
        VALUES ($1, $2, 'WAGER_STAKE', $3, $4, $5, $6)`,
       [poolId, userId, -stakePoints, wagerId, gameId, `Wager on game ${gameId}`]

@@ -1,12 +1,15 @@
 // server.js
-import dotenv from "dotenv"; dotenv.config();
-import express from "express"; import cors from "cors"; import helmet from "helmet";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import helmet from "helmet";
+dotenv.config();
 
-import leaderboardRoutes from "./routes/leaderboardRoutes.js";
-import wagersRoutes from "./routes/wagersRoutes.js";
 import authRoutes from "./routes/authenticateRoutes.js";
-import poolsRoutes from "./routes/poolsRoutes.js";
 import gamesRoutes from "./routes/gamesRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import poolsRoutes from "./routes/poolsRoutes.js";
+import wagersRoutes from "./routes/wagersRoutes.js";
 
 const app = express();
 app.use(helmet());

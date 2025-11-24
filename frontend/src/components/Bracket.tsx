@@ -187,7 +187,7 @@ export default function Bracket() {
 
   const allMatches = createBracketMatches();
 
-  // split regional (rounds 1–4) vs finals (5–6)
+  // split regional (rounds 1-4) vs finals (5-6)
   const regionalMatches = allMatches.filter((m) => m.round <= 4);
   const finalsMatches = allMatches.filter((m) => m.round >= 5);
 
