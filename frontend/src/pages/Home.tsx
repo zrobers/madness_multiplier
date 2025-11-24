@@ -14,7 +14,7 @@ import PoolDetail from "./PoolDetail";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" |  "pool-detail" |  "how-it-works">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" | "pool-detail" | "how-it-works">("home");
   const [userName, setUserName] = useState<string | null>(null);
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
 
@@ -22,9 +22,8 @@ export default function HomePage() {
     setSelectedPoolId(poolId);
     setActiveTab('pool-detail');
   };
-  
-  const location = useLocation();
 
+  const location = useLocation();
 
   // 1) Pick up name passed from Login (navigate("/", { state: { userName } }))
   useEffect(() => {
@@ -35,26 +34,24 @@ export default function HomePage() {
   }, [location.state]);
 
   // 2) Listen to Firebase auth so refresh still knows who we are
-  const [handle, setHandle] = useState<string | null>(null);
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
-          const data = await res.json();
-          setHandle(data.handle); // mm.users.handle
-        } catch (err) {
-          console.error(err);
-          setHandle(null);
-        }
-      } else {
-        setHandle(null);
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
+        const data = await res.json();
+        console.log("Fetched handle:", data);
+        setUserName(data.handle); // <-- set handle from your database
+      } catch (err) {
+        console.error(err);
+        setUserName(null);
       }
-    });
-    return () => unsubscribe();
-  }, []);
-
+    } else {
+      setUserName(null);
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "pool-detail" |"how-it-works") => {
     setActiveTab(tab);
@@ -85,46 +82,29 @@ export default function HomePage() {
         </div>
 
         <header className="tabs">
-          <button
-            className={`tab ${activeTab === "home" ? "active" : ""}`}
-            onClick={() => handleTabClick("home")}
-          >
+          <button className={`tab ${activeTab === "home" ? "active" : ""}`} onClick={() => handleTabClick("home")}>
             Home
           </button>
-          <button
-            className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
-            onClick={() => handleTabClick("view-picks")}
-          >
+          <button className={`tab ${activeTab === "view-picks" ? "active" : ""}`} onClick={() => handleTabClick("view-picks")}>
             View Picks
           </button>
-          <button
-            className={`tab ${activeTab === "submit-picks" ? "active" : ""}`}
-            onClick={() => handleTabClick("submit-picks")}
-          >
+          <button className={`tab ${activeTab === "submit-picks" ? "active" : ""}`} onClick={() => handleTabClick("submit-picks")}>
             Submit Picks
           </button>
-          <button
-            className={`tab ${activeTab === "how-it-works" ? "active" : ""}`}
-            onClick={() => handleTabClick("how-it-works")}
-          >
+          <button className={`tab ${activeTab === "how-it-works" ? "active" : ""}`} onClick={() => handleTabClick("how-it-works")}>
             How It Works
           </button>
         </header>
 
         {/* Right side: either Login/Register or user pill + logout */}
-        {handle ? (
+        {userName ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span className="user-pill">Hi, {handle}</span>
-            <button className="loginButton" onClick={handleLogout}>
-              Logout
-            </button>
+            <span className="user-pill">Hi, {userName}</span>
+            <button className="loginButton" onClick={handleLogout}>Logout</button>
           </div>
         ) : (
-          <button className="loginButton" onClick={() => navigate("/login")}>
-            Login / Register
-          </button>
+          <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
         )}
-
       </div>
 
       {activeTab === "home" && (
@@ -149,18 +129,8 @@ export default function HomePage() {
         </>
       )}
 
-      {activeTab === 'submit-picks' && (
-        <SubmitPicks />
-      )}
-
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
-      )}
-      
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
-      )}
-
+      {activeTab === 'submit-picks' && <SubmitPicks />}
+      {activeTab === 'how-it-works' && <HowItWorks />}
       {activeTab === 'pool-detail' && selectedPoolId && (
         <section className="belowGrid pool-detail">
           <div style={{ width: '100%' }}>

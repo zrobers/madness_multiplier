@@ -12,8 +12,6 @@ export default function App() {
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
-  const [userHandle, setUserHandle] = React.useState<string | null>(null);
-
   // ✅ Track Firebase login state
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -22,17 +20,6 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
-
-  React.useEffect(() => {
-    if (user?.uid) {
-      fetch(`http://localhost:4000/api/auth/handle/${user.uid}`)
-        .then(res => res.json())
-        .then(data => setUserHandle(data.handle))
-        .catch(err => console.error(err));
-    } else {
-      setUserHandle(null);
-    }
-  }, [user]);
 
   if (loading) return <p>Loading...</p>;
 
