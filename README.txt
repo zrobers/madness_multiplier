@@ -65,27 +65,41 @@ Andrew Tucker
 Charlie Konen
 Justin Aronwald
 Logan Dracos
+
 Github Link:
 
 https://github.com/zrobers/madness_multiplier
+
+Video: 
+
+https://youtu.be/LlFQNSxx8mQ
 
 Description:
 
 Madness Multiplier is a database-backed website that reimagines the excitement of March Madness through a structured, point-based wagering system. Players place wagers using fake money on NCAA tournament games, with multipliers determined by the relative seeding of the teams. The platform tracks wagers, calculates payouts automatically, and maintains live leaderboards for pools of friends or larger groups.
 
-Progress Since Milestone 1:
+Our realistic data can be found in backend/db/data. API updates are in backend/controllers and frontend updates in frontend/src. 
 
-Each member has contributed to making the idea of Madness Multiplier more concrete, building a lightweight prototype in Google Sheets, and brainstorming the Database schema.
+Progress Since Milestone 3:
 
-Zach: Refined the project structure, worked on database schema planning, and contributed to the prototype
-
-Andrew: Backend planning and helped test the Google Sheets prototype
-
-Charlie: Worked on a logo and front-end ideation
-
-Justin: Supported prototype testing and helped define how wagers and leaderboards will interact in the final build.
-
-Logan: Researched data sources for score data
+Zach: 
+Compiled a complete dataset of 2024 March madness games compatible with the existing schema 
+Worked on a proof of concept for pulling live score data via an external API (right now using SportsDB)
+Justin:
+Added pop up to tournament bracket so that past games show your wagers and future games allow you to wager 
+Added current user and logout to the home page  once you 
+Updated login/register UI
+Andrew: 
+Added more information to the registration page including first and last name. 
+Connected registration to the database to input all fields correctly including creating and inserting initials and username. 
+Test register cases and added error messages for duplicate usernames/emails. 
+Logan: 
+Implemented three new Pools APIs. 
+Integrated into home screen and added several pages and components for proper pool creation and joining
+Charlie:
+Updated submit picks page so that it is unique for each user and is linked to the account that is logged in
+Added logic to adjust the amount of points available to bet depending on amount wagered
+Updated the view picks page to only show the wagers made by the logged in user
 
 Additional Updates:
 
