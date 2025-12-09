@@ -72,7 +72,7 @@ export default function LiveScores() {
   if (loading) {
     return (
       <div className="card">
-        <div className="cardTitle">POC: Live Basketball Scores</div>
+        <div className="cardTitle">Live College Basketball Scores</div>
         <div style={{ padding: '16px', textAlign: 'center' }}>
           Loading today's games...
         </div>
@@ -83,7 +83,7 @@ export default function LiveScores() {
   if (error) {
     return (
       <div className="card">
-        <div className="cardTitle">POC: Live Basketball Scores</div>
+        <div className="cardTitle">Live College Basketball Scores</div>
         <div style={{ padding: '16px', textAlign: 'center', color: '#dc2626' }}>
           {error}
         </div>
@@ -94,7 +94,7 @@ export default function LiveScores() {
   if (games.length === 0) {
     return (
       <div className="card">
-        <div className="cardTitle">POC: Live Basketball Scores</div>
+        <div className="cardTitle">Live College Basketball Scores</div>
         <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
           No games scheduled for today.
         </div>
@@ -110,15 +110,20 @@ export default function LiveScores() {
   return (
     <div className="card">
       <div className="lbHeader" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>POC: Live Basketball Scores</span>
+        <span>Live College Basketball Scores</span>
         <span style={{ fontSize: '0.875rem', fontWeight: 'normal', color: '#6b7280' }}>
-          Powered by TheSportsDB
+          Powered by NCAA API
         </span>
       </div>
       
       {date && (
         <div style={{ padding: '8px 16px', fontSize: '0.875rem', color: '#6b7280', borderBottom: '1px solid #e5e7eb' }}>
-          {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {(() => {
+            // Parse YYYY-MM-DD as local date to avoid timezone issues
+            const [year, month, day] = date.split('-').map(Number);
+            const dateObj = new Date(year, month - 1, day);
+            return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+          })()}
         </div>
       )}
 
@@ -139,7 +144,7 @@ export default function LiveScores() {
               <div key={game.id} className="gameTile" role="listitem">
                 <div className="meta">
                   <div className="time" style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                    LIVE
+                    {game.status || 'LIVE'}
                   </div>
                   <div className="net">{game.league}</div>
                 </div>
