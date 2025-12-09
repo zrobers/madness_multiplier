@@ -36,6 +36,19 @@ const roundNames: Record<string, string> = {
   'FINAL': 'Championship'
 };
 
+interface Pool {
+  pool_id: string;
+  name: string;
+  season_year: number;
+  initial_points: number;
+  unbet_penalty_pct: string;
+  allow_multi_bets: boolean;
+  created_at: string;
+  owner_user_id: string;
+  owner_handle: string;
+  owner_initials: string;
+}
+
 interface SubmitPicksProps {
   userId: string;
   userName?: string | null;
@@ -48,12 +61,47 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   const [success, setSuccess] = useState<string>('');
   const [userBalance, setUserBalance] = useState<number>(0);
   const [wagers, setWagers] = useState<WagerForm[]>([]);
-  const [poolId] = useState<string>('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66');
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [poolsLoading, setPoolsLoading] = useState(true);
+  const [selectedPoolId, setSelectedPoolId] = useState<string>('');
 
   useEffect(() => {
-    fetchGames();
-    fetchUserBalance();
+    fetchPools();
   }, []);
+
+  useEffect(() => {
+    if (selectedPoolId) {
+      fetchGames();
+      fetchUserBalance();
+    } else if (!poolsLoading && pools.length === 0) {
+      // If no pools available, still try to load some games for demo purposes
+      fetchGames();
+    }
+  }, [selectedPoolId, poolsLoading, pools.length]);
+
+  const fetchPools = async () => {
+    try {
+      setPoolsLoading(true);
+      const response = await fetch('http://localhost:4000/api/pools/user', {
+        headers: {
+          'X-User-Id': userId,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error(`Error fetching pools: ${response.statusText}`);
+      const data = await response.json();
+      setPools(data.pools || []);
+      if (data.pools && data.pools.length > 0 && !selectedPoolId) {
+        setSelectedPoolId(data.pools[0].pool_id);
+      }
+    } catch (err: any) {
+      console.error('Error fetching pools:', err);
+      setPools([]); // Set empty pools array on error
+      // Don't set error here as it prevents the page from loading
+    } finally {
+      setPoolsLoading(false);
+    }
+  };
 
   const fetchGames = async () => {
     try {
@@ -185,9 +233,10 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   };
 
   const fetchUserBalance = async () => {
+    if (!selectedPoolId) return;
     try {
       const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
-        params: { poolId },
+        params: { poolId: selectedPoolId },
         headers: {
           'X-User-Id': userId,
           'Content-Type': 'application/json'
@@ -273,7 +322,7 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
           
           return {
             wager_id: `demo-${Date.now()}-${wager.gameId}`,
-            pool_id: poolId,
+            pool_id: selectedPoolId,
             user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
             game_id: wager.gameId,
             picked_team_id: wager.teamId,
@@ -305,7 +354,7 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
         const results = await Promise.all(
           validWagers.map(async (wager) => {
             const response = await axios.post('http://localhost:4000/api/wagers', {
-              poolId,
+              poolId: selectedPoolId,
               gameId: wager.gameId,
               teamId: wager.teamId,
               amount: wager.amount,
@@ -355,25 +404,58 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   return (
     <div className="card">
         <div className="cardTitle">Submit Your Picks</div>
-        
+
+        {/* Pool Selection */}
+        <div className="pool-selection" style={{ marginBottom: '16px' }}>
+          <label htmlFor="pool-select" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+            Select Pool:
+          </label>
+          {poolsLoading ? (
+            <div>Loading pools...</div>
+          ) : pools.length === 0 ? (
+            <div className="warning-message">No pools available. Please join a pool first from the Home page.</div>
+          ) : (
+            <select
+              id="pool-select"
+              value={selectedPoolId}
+              onChange={(e) => setSelectedPoolId(e.target.value)}
+              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
+            >
+              {pools.map((pool) => (
+                <option key={pool.pool_id} value={pool.pool_id}>
+                  {pool.name} ({pool.initial_points} pts)
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
         {error && error.includes('mock') && <div className="warning-message">{error}</div>}
         {error && !error.includes('mock') && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
-        
+
         {games.length === 0 && !loading && (
           <div className="error-message">No games available for wagering.</div>
         )}
-        
-        <div className="balance-info">
-          <p>Your Balance: <strong>{typeof userBalance === 'number' ? userBalance.toFixed(2) : '0.00'} points</strong></p>
-          <p>Total Wagered: <strong>{calculateTotalWagered().toFixed(2)} points</strong></p>
-          <p style={{
-            color: ((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()) < 50 ? '#dc2626' : '#059669',
-            fontWeight: 'bold'
-          }}>
-            Remaining: <strong>{((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()).toFixed(2)} points</strong>
-          </p>
-        </div>
+
+        {selectedPoolId && (
+          <div className="balance-info">
+            <p>Your Balance: <strong>{typeof userBalance === 'number' ? userBalance.toFixed(2) : '0.00'} points</strong></p>
+            <p>Total Wagered: <strong>{calculateTotalWagered().toFixed(2)} points</strong></p>
+            <p style={{
+              color: ((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()) < 50 ? '#dc2626' : '#059669',
+              fontWeight: 'bold'
+            }}>
+              Remaining: <strong>{((typeof userBalance === 'number' ? userBalance : 0) - calculateTotalWagered()).toFixed(2)} points</strong>
+            </p>
+          </div>
+        )}
+
+        {!selectedPoolId && pools.length > 0 && (
+          <div className="warning-message">
+            Please select a pool above to view your balance and place wagers.
+          </div>
+        )}
 
         <div className="wager-instructions">
           <h3>Instructions:</h3>
@@ -474,21 +556,23 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
           </div>
         ))}
 
-        <div className="submit-section">
-          <button 
-            className="submit-wagers-btn"
-            onClick={submitWagers}
-            disabled={loading || !!validateWagers()}
-          >
-            {loading ? 'Submitting...' : `Submit ${wagers.filter(w => w.teamId && w.amount > 0).length} Wagers`}
-          </button>
-          
-          {validateWagers() && (
-            <div className="validation-error">
-              {validateWagers()}
-            </div>
-          )}
-        </div>
+        {selectedPoolId && (
+          <div className="submit-section">
+            <button
+              className="submit-wagers-btn"
+              onClick={submitWagers}
+              disabled={loading || !!validateWagers()}
+            >
+              {loading ? 'Submitting...' : `Submit ${wagers.filter(w => w.teamId && w.amount > 0).length} Wagers`}
+            </button>
+
+            {validateWagers() && (
+              <div className="validation-error">
+                {validateWagers()}
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }

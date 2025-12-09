@@ -24,12 +24,12 @@ router.post("/register", async (req, res) => {
   const { uid, handle, email, initials } = req.body;
 
   try {
-    
+
     const result = await pool.query(
-      `INSERT INTO mm.users (user_id, handle, email, initials)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO mm.users (user_id, auth0_sub, handle, email, initials)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [uid, handle, email, initials]
+      [uid, uid, handle, email, initials]  // Set both user_id and auth0_sub to Firebase UID
     );
 
     res.status(201).json(result.rows[0]);
@@ -37,6 +37,9 @@ router.post("/register", async (req, res) => {
     console.error("Database insert failed:", err);
     if (err.code === "23505" && err.detail?.includes("handle")) {
       return res.status(400).json({ error: "Handle already exists" });
+    }
+    if (err.code === "23505" && err.detail?.includes("auth0_sub")) {
+      return res.status(400).json({ error: "User already exists" });
     }
     res.status(500).json({ error: "Database insert failed" });
   }
