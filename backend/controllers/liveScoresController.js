@@ -1,149 +1,93 @@
 // controllers/liveScoresController.js
-const THE_SPORTS_DB_BASE_URL = "https://www.thesportsdb.com/api/v1/json/123";
+
+const NCAA_API_BASE_URL = "https://ncaa-api.henrygd.me";
+// Public API, no key required. Limited to ~5 req/s per IP.
 
 export async function getLiveScores(req, res, next) {
   try {
-    // Get today's date in YYYY-MM-DD format in server local time
-    // (en-CA locale gives YYYY-MM-DD)
-    const today = new Date();
-    const todayStr = today.toLocaleDateString("en-CA"); 
+    // NCAA API lets you omit the date to get today's scoreboard
+    // /scoreboard/basketball-men/d1 => today's D1 men's games
+    const url = `${NCAA_API_BASE_URL}/scoreboard/basketball-men/d1`;
 
-    // Try fetching *all* events for today, then we will filter to Basketball
-    let url = `${THE_SPORTS_DB_BASE_URL}/eventsday.php?d=${todayStr}`;
-    let response = await fetch(url);
-
+    const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`TheSportsDB API returned ${response.status}`);
+      throw new Error(`NCAA API returned ${response.status}`);
     }
 
-    let data = await response.json();
+    const data = await response.json();
 
-    // If absolutely nothing came back, try again with sport filter as a backup
-    if (!data.events || data.events.length === 0) {
-      console.log(
-        `[LiveScores] No events for ${todayStr} without sport filter, trying with s=Basketball...`
-      );
-      url = `${THE_SPORTS_DB_BASE_URL}/eventsday.php?d=${todayStr}&s=Basketball`;
-      response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`TheSportsDB API returned ${response.status}`);
-      }
-
-      data = await response.json();
-    }
-
-    const allEvents = data.events || [];
-    console.log(
-      `[LiveScores] Raw events from API for ${todayStr}: ${allEvents.length}`
-    );
-
-    // First, restrict to basketball only
-    const basketballEvents = allEvents.filter(event => {
-      const sport = (event.strSport || "").toLowerCase();
-      return sport === "basketball";
-    });
+    const gamesArray = Array.isArray(data.games) ? data.games : [];
 
     console.log(
-      `[LiveScores] Filtered to ${basketballEvents.length} basketball events`
+      `[LiveScores] NCAA API returned ${gamesArray.length} games for men's D1 basketball`
     );
 
-    // Now filter for men's college basketball games (not NBA or other pro)
-    const collegeGames = basketballEvents.filter(event => {
-      const league = (event.strLeague || "").toLowerCase();
+    // Format today's date as YYYY-MM-DD (en-CA)
+    const today = new Date();
+    const todayStr = today.toLocaleDateString("en-CA");
 
-      // Explicitly exclude professional / non-college leagues
-      if (
-        league.includes("nba") ||
-        league.includes("wnba") ||
-        league.includes("professional") ||
-        league.includes("g league") ||
-        league.includes("euroleague") ||
-        league.includes("eurocup")
-      ) {
-        return false;
-      }
+    const formattedGames = gamesArray.map(entry => {
+      // Each entry is of the form { game: { ... } }
+      const game = entry.game || entry;
 
-      // Positive college signals in the league name
-      if (
-        league.includes("ncaa") ||
-        league.includes("college") ||
-        league.includes("division i") ||
-        league.includes("division 1") ||
-        league.includes("d1") ||
-        league.includes("ncaa division i") ||
-        league.includes("march madness")
-      ) {
-        return true;
-      }
+      const home = game.home || {};
+      const away = game.away || {};
 
-      // Also check team names for college indicators
-      const homeTeam = (event.strHomeTeam || "").toLowerCase();
-      const awayTeam = (event.strAwayTeam || "").toLowerCase();
-      const hasCollegeIndicators =
-        homeTeam.includes("university") ||
-        homeTeam.includes("state") ||
-        homeTeam.includes("college") ||
-        awayTeam.includes("university") ||
-        awayTeam.includes("state") ||
-        awayTeam.includes("college");
-
-      // If league is missing or generic but team names look like colleges
-      if (!league && hasCollegeIndicators) {
-        return true;
-      }
-
-      // Otherwise, treat as non-college
-      return false;
-    });
-
-    console.log(
-      `[LiveScores] Filtered to ${collegeGames.length} college basketball games`
-    );
-
-    // If no college games found, optionally fall back to *all* basketball events
-    const gamesToUse =
-      collegeGames.length > 0 ? collegeGames : basketballEvents;
-
-    if (collegeGames.length === 0 && gamesToUse.length > 0) {
-      console.log(
-        `[LiveScores] No confirmed college games found, using ${gamesToUse.length} basketball games as fallback`
-      );
-    }
-
-    const formattedGames = gamesToUse.map(event => {
       const homeScore =
-        event.intHomeScore !== null && event.intHomeScore !== undefined
-          ? parseInt(event.intHomeScore, 10)
-          : null;
-      const awayScore =
-        event.intAwayScore !== null && event.intAwayScore !== undefined
-          ? parseInt(event.intAwayScore, 10)
+        home.score !== undefined && home.score !== null && home.score !== ""
+          ? parseInt(home.score, 10)
           : null;
 
-      const status = event.strStatus || "Scheduled";
+      const awayScore =
+        away.score !== undefined && away.score !== null && away.score !== ""
+          ? parseInt(away.score, 10)
+          : null;
+
+      const rawGameState = (game.gameState || "").toLowerCase();
+      const finalMessage = game.finalMessage || "";
+      const currentPeriod = game.currentPeriod || "";
+      const contestClock = game.contestClock || "";
+
+      // Human-readable status string
+      let status;
+      if (finalMessage) {
+        status = finalMessage; // e.g. "FINAL"
+      } else if (rawGameState === "final") {
+        status = "FINAL";
+      } else if (rawGameState === "in_progress") {
+        // e.g. "2nd 05:43"
+        const periodPart = currentPeriod || "LIVE";
+        const clockPart = contestClock || "";
+        status = `${periodPart} ${clockPart}`.trim();
+      } else if (rawGameState === "pre") {
+        status = "Scheduled";
+      } else if (rawGameState) {
+        status = rawGameState.toUpperCase();
+      } else {
+        status = "Scheduled";
+      }
+
+      // Normalize to SCHEDULED / LIVE / FINAL for your frontend logic
       let gameState = "SCHEDULED";
-      if (status.toLowerCase() === "live") {
+      if (rawGameState === "in_progress") {
         gameState = "LIVE";
-      } else if (
-        status.toLowerCase() === "ft" ||
-        status.toLowerCase() === "finished" ||
-        status.toLowerCase() === "after overtime"
-      ) {
+      } else if (rawGameState === "final") {
         gameState = "FINAL";
       }
 
       return {
-        id: event.idEvent,
-        homeTeam: event.strHomeTeam || "TBD",
-        awayTeam: event.strAwayTeam || "TBD",
+        id: game.gameID || game.url || null,
+        homeTeam:
+          (home.names && (home.names.short || home.names.full)) || "TBD",
+        awayTeam:
+          (away.names && (away.names.short || away.names.full)) || "TBD",
         homeScore,
         awayScore,
-        status,
-        time: event.strTime || event.dateEvent,
-        date: event.dateEvent,
-        league: event.strLeague || "College Basketball",
-        venue: event.strVenue || null,
+        status, // e.g. "FINAL", "2nd 05:43", "Scheduled"
+        time: game.startTime || null, // e.g. "7:00PM ET"
+        date: game.startDate || todayStr, // NCAA gives "MM-DD-YYYY"; we also expose top-level date below
+        league: "NCAA Division I Men's Basketball",
+        venue: null, // not provided by scoreboard; could be filled via /game/{id} if you want
         gameState
       };
     });
@@ -151,13 +95,14 @@ export async function getLiveScores(req, res, next) {
     res.json({
       date: todayStr,
       games: formattedGames,
-      source: "TheSportsDB",
-      totalEvents: allEvents.length,
-      basketballEvents: basketballEvents.length,
-      collegeEvents: collegeGames.length
+      source: "henrygd/ncaa-api",
+      // Keep these keys so your frontend doesn't break, even though they're redundant now
+      totalEvents: gamesArray.length,
+      basketballEvents: gamesArray.length,
+      collegeEvents: gamesArray.length
     });
   } catch (err) {
-    console.error("Error fetching live scores:", err);
+    console.error("Error fetching NCAA live scores:", err);
     res.status(500).json({
       error: "Failed to fetch live scores",
       message: err.message
