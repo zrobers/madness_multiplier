@@ -36,7 +36,7 @@ router.post("/register", async (req, res) => {
    } catch (err) {
     console.error("Database insert failed:", err);
     if (err.code === "23505" && err.detail?.includes("handle")) {
-      return res.status(400).json({ error: "Handle already exists" });
+      return res.status(400).json({ error: "Username already exists" });
     }
     if (err.code === "23505" && err.detail?.includes("auth0_sub")) {
       return res.status(400).json({ error: "User already exists" });

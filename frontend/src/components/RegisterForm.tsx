@@ -8,6 +8,7 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,8 +20,8 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      //Build handle EXACTLY how it used to be: "First Last"
-      const handle = `${firstName} ${lastName}`.trim();
+      //Build handle
+      const handle = username.trim().replace(/\s+/g, '').toLowerCase();
 
       const initials =
         (firstName[0] || "").toUpperCase() +
@@ -33,7 +34,7 @@ export default function RegisterForm() {
       );
 
       if (!handleCheck.data.available) {
-        setError("Name already exists. Please add a number to last name");
+        setError("Username already exists");
         setLoading(false);
         return;
       }
@@ -61,6 +62,7 @@ export default function RegisterForm() {
       setPassword("");
       setFirstName("");
       setLastName("");
+      setUsername("");
 
       navigate("/");
 
@@ -109,6 +111,21 @@ export default function RegisterForm() {
           placeholder="Doe"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="register-username">
+          Username
+        </label>
+        <input
+          id="register-username"
+          type="text"
+          className="auth-input"
+          placeholder="Choose a username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
       </div>
