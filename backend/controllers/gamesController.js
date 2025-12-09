@@ -1,13 +1,15 @@
 import { query } from "../db/index.js";
+import { getCurrentTime } from "../utils/simulatedTime.js";
 
 export async function getGames(req, res, next) {
   try {
     const poolId = req.query.poolId;
     const season = req.query.season || 2024;
 
-    // Hardcoded current time - simulating we're during the tournament
-    // Set this to a time before Round of 64 games start
-    const CURRENT_TIME = new Date('2024-03-20T12:00:00Z'); // Before Round of 64 games start
+    // Use simulated current time - simulating we're during the tournament
+    // Set this to be after Round of 64 (March 20-21) and before Round of 32 (March 22-23)
+    // March 22, 2025 at midnight UTC - after Round of 64 has finished, before Round of 32 starts
+    const CURRENT_TIME = getCurrentTime(); // Between Round of 64 and Round of 32
     
     const result = await query(
       `

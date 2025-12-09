@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface Game {
   game_id: number;
@@ -67,12 +67,66 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
 
   useEffect(() => {
     fetchPools();
-  }, []);
+  }, [userId]); // Re-fetch pools when userId changes
+
+  // Refresh pools when page becomes visible (user returns from joining a pool)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && userId) {
+        console.log('Page became visible, refreshing pools...');
+        fetchPools();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [userId]);
+
+  // Define fetchUserBalance before using it in useEffect
+  const fetchUserBalance = useCallback(async () => {
+    if (!selectedPoolId || !userId) {
+      setUserBalance(0);
+      return;
+    }
+    try {
+      console.log(`Fetching balance for pool: ${selectedPoolId}, user: ${userId}`);
+      const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
+        params: { poolId: selectedPoolId },
+        headers: {
+          'X-User-Id': userId,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && typeof response.data.balance === 'number') {
+        console.log(`Balance for pool ${selectedPoolId}:`, response.data.balance);
+        setUserBalance(response.data.balance);
+      } else {
+        console.warn('Invalid balance response:', response.data);
+        setUserBalance(0);
+      }
+    } catch (err: any) {
+      console.error('Error fetching user balance:', err);
+      console.error('Error details:', err.response?.data);
+      console.error('Request was for poolId:', selectedPoolId, 'userId:', userId);
+      setUserBalance(0); // Default to 0 if API fails
+    }
+  }, [selectedPoolId, userId]);
+
+  // Fetch balance whenever selectedPoolId or userId changes
+  useEffect(() => {
+    if (selectedPoolId && userId) {
+      fetchUserBalance();
+    } else {
+      setUserBalance(0);
+    }
+  }, [selectedPoolId, userId, fetchUserBalance]);
 
   useEffect(() => {
     if (selectedPoolId) {
       fetchGames();
-      fetchUserBalance();
+      // Reset wagers when switching pools
+      setWagers([]);
     } else if (!poolsLoading && pools.length === 0) {
       // If no pools available, still try to load some games for demo purposes
       fetchGames();
@@ -80,8 +134,14 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   }, [selectedPoolId, poolsLoading, pools.length]);
 
   const fetchPools = async () => {
+    if (!userId) {
+      setPools([]);
+      setPoolsLoading(false);
+      return;
+    }
     try {
       setPoolsLoading(true);
+      console.log('Fetching pools for user:', userId);
       const response = await fetch('http://localhost:4000/api/pools/user', {
         headers: {
           'X-User-Id': userId,
@@ -90,13 +150,22 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
       });
       if (!response.ok) throw new Error(`Error fetching pools: ${response.statusText}`);
       const data = await response.json();
+      console.log('Fetched pools:', data.pools?.length || 0);
       setPools(data.pools || []);
-      if (data.pools && data.pools.length > 0 && !selectedPoolId) {
-        setSelectedPoolId(data.pools[0].pool_id);
+      
+      // If we have pools and no selected pool, or if selected pool is no longer in list, select first pool
+      if (data.pools && data.pools.length > 0) {
+        if (!selectedPoolId || !data.pools.find((p: Pool) => p.pool_id === selectedPoolId)) {
+          console.log('Setting selected pool to:', data.pools[0].pool_id);
+          setSelectedPoolId(data.pools[0].pool_id);
+        }
+      } else {
+        setSelectedPoolId('');
       }
     } catch (err: any) {
       console.error('Error fetching pools:', err);
       setPools([]); // Set empty pools array on error
+      setSelectedPoolId('');
       // Don't set error here as it prevents the page from loading
     } finally {
       setPoolsLoading(false);
@@ -127,11 +196,22 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
         useDemoGames();
       } else {
         setGames(scheduledGames);
-        setWagers(scheduledGames.map((game: Game) => ({
-          gameId: game.game_id,
-          teamId: null,
-          amount: 0
-        })));
+        // Initialize wagers for scheduled games (only if wagers array is empty or needs reset)
+        setWagers(prev => {
+          // If switching pools or wagers are empty, reset them
+          if (prev.length === 0 || !selectedPoolId) {
+            return scheduledGames.map((game: Game) => ({
+              gameId: game.game_id,
+              teamId: null,
+              amount: 0
+            }));
+          }
+          // Otherwise keep existing wagers but filter to only include current games
+          return scheduledGames.map((game: Game) => {
+            const existing = prev.find(w => w.gameId === game.game_id);
+            return existing || { gameId: game.game_id, teamId: null, amount: 0 };
+          });
+        });
       }
       
       setLoading(false);
@@ -232,28 +312,6 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
     })));
   };
 
-  const fetchUserBalance = async () => {
-    if (!selectedPoolId) return;
-    try {
-      const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
-        params: { poolId: selectedPoolId },
-        headers: {
-          'X-User-Id': userId,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.data && typeof response.data.balance === 'number') {
-        setUserBalance(response.data.balance);
-      } else {
-        setUserBalance(0);
-      }
-    } catch (err) {
-      console.error('Error fetching user balance:', err);
-      setUserBalance(0); // Default to 0 if API fails
-    }
-  };
-
   const updateWager = (gameId: number, field: 'teamId' | 'amount', value: number) => {
     setWagers(prev => prev.map(wager => 
       wager.gameId === gameId 
@@ -350,11 +408,17 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
         setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
         
       } else {
-        // Submit to real API
+        // Submit to real API - ensure we're using the selected pool
+        if (!selectedPoolId) {
+          setError('Please select a pool before submitting wagers');
+          setLoading(false);
+          return;
+        }
+
         const results = await Promise.all(
           validWagers.map(async (wager) => {
             const response = await axios.post('http://localhost:4000/api/wagers', {
-              poolId: selectedPoolId,
+              poolId: selectedPoolId, // Explicitly use selected pool
               gameId: wager.gameId,
               teamId: wager.teamId,
               amount: wager.amount,
@@ -369,10 +433,10 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
           })
         );
 
-        setSuccess(`Successfully placed ${results.length} wagers!`);
-        fetchUserBalance(); // Refresh balance
+        setSuccess(`Successfully placed ${results.length} wagers in this pool!`);
+        fetchUserBalance(); // Refresh balance for the current pool
         
-        // Reset form
+        // Reset form for this pool
         setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
       }
       
@@ -418,7 +482,32 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
             <select
               id="pool-select"
               value={selectedPoolId}
-              onChange={(e) => setSelectedPoolId(e.target.value)}
+              onChange={async (e) => {
+                const newPoolId = e.target.value;
+                console.log('Pool changed to:', newPoolId);
+                setSelectedPoolId(newPoolId);
+                // Reset wagers when switching pools
+                setWagers([]);
+                // Explicitly fetch balance for the new pool
+                // The useEffect will also trigger, but this ensures immediate update
+                if (newPoolId && userId) {
+                  try {
+                    const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
+                      params: { poolId: newPoolId },
+                      headers: {
+                        'X-User-Id': userId,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    if (response.data && typeof response.data.balance === 'number') {
+                      console.log(`Immediate balance update for pool ${newPoolId}:`, response.data.balance);
+                      setUserBalance(response.data.balance);
+                    }
+                  } catch (err) {
+                    console.error('Error fetching balance on pool change:', err);
+                  }
+                }
+              }}
               style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
             >
               {pools.map((pool) => (

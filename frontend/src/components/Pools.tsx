@@ -17,9 +17,10 @@ type Pool = {
 type Props = {
   onOpenPool?: (poolId: string) => void;
   userName?: string | null;
+  userId?: string | null;
 };
 
-export default function Pools({ onOpenPool, userName }: Props) {
+export default function Pools({ onOpenPool, userName, userId }: Props) {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +152,7 @@ export default function Pools({ onOpenPool, userName }: Props) {
             setTimeout(() => setMessage(null), 3000);
           }}
           currentUser={userName}
+          userId={userId || undefined}
         />
       )}
     </div>

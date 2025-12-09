@@ -15,7 +15,7 @@ export async function getUserPools(req, res) {
 
     // Look up user in database
     const userRecord = await query(
-      `SELECT user_id FROM mm.users WHERE auth0_sub = $1`,
+      `SELECT user_id FROM mm.users WHERE user_id = $1`,
       [firebaseUserId]
     );
 
@@ -183,18 +183,40 @@ export async function joinPool(req, res) {
   try {
     const { id } = req.params; // pool_id
     const { handle } = req.body;
-    console.log(handle);
-    if (!handle) return res.status(400).json({ error: 'handle is required to join' });
+    
+    // Get Firebase user ID from header (preferred) or use handle
+    const firebaseUserId = req.header("X-User-Id");
+    
+    let dbUserId;
+    
+    if (firebaseUserId) {
+      // Look up user by Firebase UID
+      const userRecord = await query(
+        `SELECT user_id FROM mm.users WHERE user_id = $1`,
+        [firebaseUserId]
+      );
+      
+      if (userRecord.rowCount === 0) {
+        return res.status(400).json({ error: 'User not found. Please sign up first.' });
+      }
+      
+      dbUserId = userRecord.rows[0].user_id;
+    } else if (handle) {
+      // Fallback to handle lookup
+      const user = await findUserByHandle(handle);
+      if (!user) {
+        return res.status(400).json({ error: 'handle does not exist. Please sign up first.' });
+      }
+      dbUserId = user.user_id;
+    } else {
+      return res.status(400).json({ error: 'Either X-User-Id header or handle is required to join' });
+    }
 
     // ensure pool exists
-    const poolCheck = await query(`SELECT pool_id FROM mm.pools WHERE pool_id = $1`, [id]);
+    const poolCheck = await query(`SELECT pool_id, initial_points FROM mm.pools WHERE pool_id = $1`, [id]);
     if (!poolCheck.rows.length) return res.status(404).json({ error: 'Pool not found' });
-
-    // Require user exists
-    const user = await findUserByHandle(handle);
-    if (!user) {
-      return res.status(400).json({ error: 'handle does not exist. Please sign up first.' });
-    }
+    
+    const initialPoints = Number(poolCheck.rows[0].initial_points);
 
     const insertSql = `
       INSERT INTO mm.pool_members (pool_id, user_id)
@@ -202,30 +224,44 @@ export async function joinPool(req, res) {
       ON CONFLICT DO NOTHING
       RETURNING pool_id, user_id, joined_at
     `;
-    const insertRes = await query(insertSql, [id, user.user_id]);
-    if (!insertRes.rows.length) {
-      // already a member
-      return res.json({ message: 'Already a member', pool_id: id, user_id: user.user_id });
-    }
-
-    // Allocate initial credits for the new pool member
-    const poolQuery = await query(
-      `SELECT initial_points FROM mm.pools WHERE pool_id = $1`,
-      [id]
+    const insertRes = await query(insertSql, [id, dbUserId]);
+    
+    // Check if user already has initial credits for this pool
+    const existingCredits = await query(
+      `SELECT COUNT(*) as count 
+       FROM mm.transactions 
+       WHERE pool_id = $1 AND user_id = $2 AND tx_type = 'INIT_CREDIT'`,
+      [id, dbUserId]
     );
+    
+    const hasCredits = Number(existingCredits.rows[0].count) > 0;
 
-    if (poolQuery.rows.length > 0) {
-      const initialPoints = Number(poolQuery.rows[0].initial_points);
-
-      // Give initial credits
-      await query(
-        `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
-         VALUES ($1, $2, 'INIT_CREDIT', $3, 'Initial pool credits')`,
-        [id, user.user_id, initialPoints]
-      );
+    if (!insertRes.rows.length) {
+      // already a member - check if they have credits
+      if (!hasCredits) {
+        // Give initial credits even if already a member (in case they joined before credits were implemented)
+        await query(
+          `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
+           VALUES ($1::uuid, $2, 'INIT_CREDIT', $3, 'Initial pool credits')`,
+          [id, dbUserId, initialPoints]
+        );
+        console.log(`Added missing INIT_CREDIT: pool_id=${id}, user_id=${dbUserId}, points=${initialPoints}`);
+        return res.json({ message: 'Already a member - initial credits added', pool_id: id, user_id: dbUserId });
+      }
+      return res.json({ message: 'Already a member', pool_id: id, user_id: dbUserId });
     }
 
-    return res.status(201).json({ message: 'Joined pool', pool_id: id, user_id: user.user_id });
+    // New member - allocate initial credits
+    // Cast pool_id to UUID to ensure proper type matching
+    await query(
+      `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
+       VALUES ($1::uuid, $2, 'INIT_CREDIT', $3, 'Initial pool credits')`,
+      [id, dbUserId, initialPoints]
+    );
+    
+    console.log(`Created INIT_CREDIT transaction: pool_id=${id}, user_id=${dbUserId}, points=${initialPoints}`);
+
+    return res.status(201).json({ message: 'Joined pool', pool_id: id, user_id: dbUserId });
   } catch (err) {
     console.error('joinPool error', err);
     return res.status(500).json({ error: 'Internal server error' });
