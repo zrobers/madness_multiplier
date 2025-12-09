@@ -1,8 +1,8 @@
 // routes/wagers.routes.js
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
-import { v4 as uuidv4 } from 'uuid';
 import { query } from "../db/index.js";
+import { getCurrentTime } from "../utils/simulatedTime.js";
 
 const r = Router();
 
@@ -15,7 +15,7 @@ r.get("/balance", async (req, res) => {
 
     // Look up user in database
     const userRecord = await query(
-      `SELECT user_id FROM mm.users WHERE auth0_sub = $1`,
+      `SELECT user_id FROM mm.users WHERE user_id = $1`,
       [firebaseUserId]
     );
 
@@ -52,7 +52,7 @@ r.get("/", async (req, res) => {
 
     // Look up user in database
     const userRecord = await query(
-      `SELECT user_id FROM mm.users WHERE auth0_sub = $1`,
+      `SELECT user_id FROM mm.users WHERE user_id = $1`,
       [firebaseUserId]
     );
 
@@ -141,7 +141,7 @@ r.post("/", validators, async (req, res) => {
 
   // Look up or create user in database
   let userRecord = await query(
-    `SELECT user_id, handle, email FROM mm.users WHERE auth0_sub = $1`,
+    `SELECT user_id, handle, email FROM mm.users WHERE user_id = $1`,
     [firebaseUserId]
   );
 
@@ -157,13 +157,12 @@ r.post("/", validators, async (req, res) => {
       }
     }
 
-    // Create new user record
-    const newUserId = uuidv4();
+    // Create new user record - user_id is the Firebase UID
     const newUser = await query(
-      `INSERT INTO mm.users (user_id, auth0_sub, handle, email, initials)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO mm.users (user_id, handle, email, initials)
+       VALUES ($1, $2, $3, $4)
        RETURNING user_id`,
-      [newUserId, firebaseUserId, `user_${firebaseUserId.substring(0, 8)}`, null, initials]
+      [firebaseUserId, `user_${firebaseUserId.substring(0, 8)}`, null, initials]
     );
     dbUserId = newUser.rows[0].user_id;
   } else {
@@ -195,8 +194,10 @@ r.post("/", validators, async (req, res) => {
     const g = gq.rows[0];
     
     // Check if wagering is locked (game must be SCHEDULED and not past tipoff)
+    // Use simulated current time to match the games controller
+    const currentTime = getCurrentTime();
     if (g.status !== "SCHEDULED") return res.status(400).json({ error: "Wagering closed - game has started or finished" });
-    if (g.start_time_utc && new Date(g.start_time_utc) <= new Date()) {
+    if (g.start_time_utc && new Date(g.start_time_utc) <= currentTime) {
       return res.status(400).json({ error: "Wagering closed - game has reached scheduled tipoff" });
     }
     

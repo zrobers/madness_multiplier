@@ -73,6 +73,8 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
     if (selectedPoolId) {
       fetchGames();
       fetchUserBalance();
+      // Reset wagers when switching pools
+      setWagers([]);
     } else if (!poolsLoading && pools.length === 0) {
       // If no pools available, still try to load some games for demo purposes
       fetchGames();
@@ -127,11 +129,22 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
         useDemoGames();
       } else {
         setGames(scheduledGames);
-        setWagers(scheduledGames.map((game: Game) => ({
-          gameId: game.game_id,
-          teamId: null,
-          amount: 0
-        })));
+        // Initialize wagers for scheduled games (only if wagers array is empty or needs reset)
+        setWagers(prev => {
+          // If switching pools or wagers are empty, reset them
+          if (prev.length === 0 || !selectedPoolId) {
+            return scheduledGames.map((game: Game) => ({
+              gameId: game.game_id,
+              teamId: null,
+              amount: 0
+            }));
+          }
+          // Otherwise keep existing wagers but filter to only include current games
+          return scheduledGames.map((game: Game) => {
+            const existing = prev.find(w => w.gameId === game.game_id);
+            return existing || { gameId: game.game_id, teamId: null, amount: 0 };
+          });
+        });
       }
       
       setLoading(false);
@@ -350,11 +363,17 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
         setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
         
       } else {
-        // Submit to real API
+        // Submit to real API - ensure we're using the selected pool
+        if (!selectedPoolId) {
+          setError('Please select a pool before submitting wagers');
+          setLoading(false);
+          return;
+        }
+
         const results = await Promise.all(
           validWagers.map(async (wager) => {
             const response = await axios.post('http://localhost:4000/api/wagers', {
-              poolId: selectedPoolId,
+              poolId: selectedPoolId, // Explicitly use selected pool
               gameId: wager.gameId,
               teamId: wager.teamId,
               amount: wager.amount,
@@ -369,10 +388,10 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
           })
         );
 
-        setSuccess(`Successfully placed ${results.length} wagers!`);
-        fetchUserBalance(); // Refresh balance
+        setSuccess(`Successfully placed ${results.length} wagers in this pool!`);
+        fetchUserBalance(); // Refresh balance for the current pool
         
-        // Reset form
+        // Reset form for this pool
         setWagers(wagers.map(w => ({ ...w, teamId: null, amount: 0 })));
       }
       
@@ -418,7 +437,12 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
             <select
               id="pool-select"
               value={selectedPoolId}
-              onChange={(e) => setSelectedPoolId(e.target.value)}
+              onChange={(e) => {
+                setSelectedPoolId(e.target.value);
+                // Reset wagers and balance when switching pools
+                setWagers([]);
+                setUserBalance(0);
+              }}
               style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
             >
               {pools.map((pool) => (

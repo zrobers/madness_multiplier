@@ -15,7 +15,7 @@ export async function getUserPools(req, res) {
 
     // Look up user in database
     const userRecord = await query(
-      `SELECT user_id FROM mm.users WHERE auth0_sub = $1`,
+      `SELECT user_id FROM mm.users WHERE user_id = $1`,
       [firebaseUserId]
     );
 

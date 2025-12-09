@@ -40,22 +40,27 @@ export default function HomePage() {
   const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
       setUserId(user.uid);
-      // Set initial userName from Firebase (display name or email)
-      setUserName(user.displayName || user.email || 'User');
-
-      // Try to fetch updated handle from backend (don't fail if backend is down)
+      
+      // Always fetch handle from database first (this is the username)
+      // Email is linked via user_id, so we can get the handle reliably
       try {
         const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
         if (res.ok) {
           const data = await res.json();
-          console.log("Fetched handle:", data);
           if (data.handle) {
-            setUserName(data.handle); // Update with database handle if available
+            setUserName(data.handle); // Use handle (username) from database
+          } else {
+            // Fallback only if handle doesn't exist in DB
+            setUserName(user.displayName || user.email || 'User');
           }
+        } else {
+          // If user not found in DB, fallback to Firebase display name or email
+          setUserName(user.displayName || user.email || 'User');
         }
       } catch (err) {
         console.error("Could not fetch user handle from backend:", err);
-        // Keep the Firebase display name - don't set to null
+        // Fallback to Firebase display name or email if fetch fails
+        setUserName(user.displayName || user.email || 'User');
       }
     } else {
       setUserName(null);
@@ -109,7 +114,7 @@ export default function HomePage() {
           <button className={`tab ${activeTab === "home" ? "active" : ""}`} onClick={() => handleTabClick("home")}>
             Home
           </button>
-          {userName && (
+            {userName && (
             <>
               <button
                 className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
