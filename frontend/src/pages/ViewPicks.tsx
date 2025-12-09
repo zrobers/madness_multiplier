@@ -24,6 +24,19 @@ interface Wager {
   isDemoData?: boolean;
 }
 
+interface Pool {
+  pool_id: string;
+  name: string;
+  season_year: number;
+  initial_points: number;
+  unbet_penalty_pct: string;
+  allow_multi_bets: boolean;
+  created_at: string;
+  owner_user_id: string;
+  owner_handle: string;
+  owner_initials: string;
+}
+
 interface ViewPicksProps {
   userId: string;
   userName?: string | null;
@@ -34,11 +47,41 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [hasDemoData, setHasDemoData] = useState(false);
-  const [poolId] = useState<string>('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66');
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [poolsLoading, setPoolsLoading] = useState(true);
+  const [selectedPoolId, setSelectedPoolId] = useState<string>('');
 
   useEffect(() => {
-    fetchWagers();
+    fetchPools();
   }, []);
+
+  useEffect(() => {
+    if (selectedPoolId) {
+      fetchWagers();
+    }
+  }, [selectedPoolId]);
+
+  const fetchPools = async () => {
+    try {
+      setPoolsLoading(true);
+      const response = await axios.get('http://localhost:4000/api/pools/user', {
+        headers: {
+          'X-User-Id': userId,
+          'Content-Type': 'application/json'
+        }
+      });
+      setPools(response.data.pools || []);
+      if (response.data.pools && response.data.pools.length > 0 && !selectedPoolId) {
+        setSelectedPoolId(response.data.pools[0].pool_id);
+      }
+    } catch (err: any) {
+      console.error('Error fetching pools:', err);
+      setPools([]); // Set empty pools array on error
+      // Don't set error here as it prevents the page from loading
+    } finally {
+      setPoolsLoading(false);
+    }
+  };
 
   const fetchWagers = async () => {
     try {
@@ -48,10 +91,11 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
       const allWagers: Wager[] = [];
       
       // Try to fetch real wagers from API
+      if (!selectedPoolId) return;
       try {
-        console.log('Fetching wagers for userId:', userId, 'poolId:', poolId);
+        console.log('Fetching wagers for userId:', userId, 'poolId:', selectedPoolId);
         const response = await axios.get(`http://localhost:4000/api/wagers`, {
-          params: { userId, poolId },
+          params: { userId, poolId: selectedPoolId },
           headers: { 
             'X-User-Id': userId,
             'Content-Type': 'application/json'
@@ -145,7 +189,32 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
   return (
     <div className="card">
       <div className="cardTitle">Your Picks</div>
-      
+
+      {/* Pool Selection */}
+      <div className="pool-selection" style={{ marginBottom: '16px' }}>
+        <label htmlFor="pool-select-view" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+          Select Pool:
+        </label>
+        {poolsLoading ? (
+          <div>Loading pools...</div>
+        ) : pools.length === 0 ? (
+          <div className="warning-message">No pools available. Your wagers will appear here once you join a pool.</div>
+        ) : (
+          <select
+            id="pool-select-view"
+            value={selectedPoolId}
+            onChange={(e) => setSelectedPoolId(e.target.value)}
+            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
+          >
+            {pools.map((pool) => (
+              <option key={pool.pool_id} value={pool.pool_id}>
+                {pool.name} ({pool.initial_points} pts)
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
       {hasDemoData && (
         <div className="warning-message" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>⚠️ Some picks are using DEMO DATA (not saved to database)</span>

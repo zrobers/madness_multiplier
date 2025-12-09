@@ -6,8 +6,8 @@ export async function getGames(req, res, next) {
     const season = req.query.season || 2024;
 
     // Hardcoded current time - simulating we're during the tournament
-    // Set this to a time during first round games
-    const CURRENT_TIME = new Date('2024-03-23T12:00:00Z'); // 8 AM ET on March 23, 2024 - right after Round of 64
+    // Set this to a time before Round of 64 games start
+    const CURRENT_TIME = new Date('2024-03-20T12:00:00Z'); // Before Round of 64 games start
     
     const result = await query(
       `

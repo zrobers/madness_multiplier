@@ -4,6 +4,7 @@ import * as controller from '../controllers/poolsController.js';
 const router = express.Router();
 
 router.get('/', controller.getAllPools);
+router.get('/user', controller.getUserPools);
 router.get('/:id', controller.getPoolById);
 
 // body parsing middleware can be applied app-wide; included here for safety

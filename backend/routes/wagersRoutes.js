@@ -1,6 +1,7 @@
 // routes/wagers.routes.js
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
+import { v4 as uuidv4 } from 'uuid';
 import { query } from "../db/index.js";
 
 const r = Router();
@@ -157,11 +158,12 @@ r.post("/", validators, async (req, res) => {
     }
 
     // Create new user record
+    const newUserId = uuidv4();
     const newUser = await query(
-      `INSERT INTO mm.users (auth0_sub, handle, email, initials)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO mm.users (user_id, auth0_sub, handle, email, initials)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING user_id`,
-      [firebaseUserId, `user_${firebaseUserId.substring(0, 8)}`, null, initials]
+      [newUserId, firebaseUserId, `user_${firebaseUserId.substring(0, 8)}`, null, initials]
     );
     dbUserId = newUser.rows[0].user_id;
   } else {
@@ -211,34 +213,13 @@ r.post("/", validators, async (req, res) => {
     const posted_odds = Math.max(1.1, Math.min(3.5, rawOdds)); // Clamp between 1.1 and 3.5
 
     // Check user balance (sum of all transactions for this pool)
-    let bal = await query(
+    const bal = await query(
       `SELECT COALESCE(SUM(amount_points), 0) as balance
        FROM mm.transactions
        WHERE pool_id=$1 AND user_id=$2`,
       [poolId, dbUserId]
     );
-    let currentBalance = Number(bal.rows?.[0]?.balance ?? 0);
-
-    // If user has zero balance but is a pool member, give them initial credits
-    if (currentBalance === 0) {
-      const poolQuery = await query(
-        `SELECT initial_points FROM mm.pools WHERE pool_id = $1`,
-        [poolId]
-      );
-
-      if (poolQuery.rows.length > 0) {
-        const initialPoints = Number(poolQuery.rows[0].initial_points);
-
-        // Give initial credits
-        await query(
-          `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
-           VALUES ($1, $2, 'INIT_CREDIT', $3, 'Initial pool credits')`,
-          [poolId, dbUserId, initialPoints]
-        );
-
-        currentBalance = initialPoints;
-      }
-    }
+    const currentBalance = Number(bal.rows?.[0]?.balance ?? 0);
 
     if (currentBalance < stakePoints) {
       return res.status(400).json({ error: `Insufficient points. You have ${currentBalance} points but need ${stakePoints}.` });

@@ -7,6 +7,43 @@ async function findUserByHandle(handle) {
   return { user_id: selRes.rows[0].user_id, handle: selRes.rows[0].handle };
 }
 
+export async function getUserPools(req, res) {
+  try {
+    // Get Firebase user ID from header
+    const firebaseUserId = req.header("X-User-Id");
+    if (!firebaseUserId) return res.status(401).json({ error: "Firebase user ID required" });
+
+    // Look up user in database
+    const userRecord = await query(
+      `SELECT user_id FROM mm.users WHERE auth0_sub = $1`,
+      [firebaseUserId]
+    );
+
+    if (userRecord.rowCount === 0) {
+      return res.json({ pools: [] });
+    }
+
+    const dbUserId = userRecord.rows[0].user_id;
+
+    // Get pools the user is a member of
+    const sql = `
+      SELECT p.pool_id, p.name, p.season_year, p.initial_points, p.unbet_penalty_pct,
+             p.allow_multi_bets, p.created_at,
+             u.user_id AS owner_user_id, u.handle AS owner_handle, u.initials AS owner_initials
+      FROM mm.pools p
+      JOIN mm.users u ON u.user_id = p.owner_user_id
+      JOIN mm.pool_members pm ON pm.pool_id = p.pool_id
+      WHERE pm.user_id = $1
+      ORDER BY p.created_at DESC
+    `;
+    const result = await query(sql, [dbUserId]);
+    return res.json({ pools: result.rows });
+  } catch (err) {
+    console.error('getUserPools error', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getAllPools(req, res) {
   try {
     const sql = `
@@ -169,6 +206,23 @@ export async function joinPool(req, res) {
     if (!insertRes.rows.length) {
       // already a member
       return res.json({ message: 'Already a member', pool_id: id, user_id: user.user_id });
+    }
+
+    // Allocate initial credits for the new pool member
+    const poolQuery = await query(
+      `SELECT initial_points FROM mm.pools WHERE pool_id = $1`,
+      [id]
+    );
+
+    if (poolQuery.rows.length > 0) {
+      const initialPoints = Number(poolQuery.rows[0].initial_points);
+
+      // Give initial credits
+      await query(
+        `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
+         VALUES ($1, $2, 'INIT_CREDIT', $3, 'Initial pool credits')`,
+        [id, user.user_id, initialPoints]
+      );
     }
 
     return res.status(201).json({ message: 'Joined pool', pool_id: id, user_id: user.user_id });
