@@ -159,7 +159,7 @@ export default function HomePage() {
             <aside className="left">
               <Leaderboard />
               <div style={{ height: 12 }} />
-              <Pools onOpenPool={openPoolDetail} userName={userName}/>
+              <Pools onOpenPool={openPoolDetail} userName={userName} userId={userId}/>
             </aside>
             <div className="centerSpacer" aria-hidden />
             <aside className="right">

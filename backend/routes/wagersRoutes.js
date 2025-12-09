@@ -24,7 +24,11 @@ r.get("/balance", async (req, res) => {
     }
 
     const dbUserId = userRecord.rows[0].user_id;
-    const poolId = req.query.poolId || 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+    const poolId = req.query.poolId;
+    
+    if (!poolId) {
+      return res.status(400).json({ error: "poolId is required" });
+    }
 
     // Get user balance (sum of all transactions for this pool)
     const bal = await query(
@@ -35,6 +39,8 @@ r.get("/balance", async (req, res) => {
     );
 
     const balance = Number(bal.rows?.[0]?.balance ?? 0);
+    
+    console.log(`Balance query - poolId: ${poolId}, userId: ${dbUserId}, balance: ${balance}`);
 
     return res.json({ balance });
   } catch (err) {
@@ -61,7 +67,11 @@ r.get("/", async (req, res) => {
     }
 
     const dbUserId = userRecord.rows[0].user_id;
-    const poolId = req.query.poolId || 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66';
+    const poolId = req.query.poolId;
+    
+    if (!poolId) {
+      return res.status(400).json({ error: "poolId is required" });
+    }
 
     const result = await query(
       `SELECT 
@@ -94,7 +104,7 @@ r.get("/", async (req, res) => {
       JOIN mm.teams ta ON g.team_a_id = ta.team_id
       JOIN mm.teams tb ON g.team_b_id = tb.team_id
       JOIN mm.teams tp ON w.picked_team_id = tp.team_id
-      WHERE w.user_id = $1 AND w.pool_id = $2
+      WHERE w.user_id = $1 AND w.pool_id = $2::uuid
       ORDER BY w.placed_at DESC`,
       [dbUserId, poolId]
     );
@@ -175,9 +185,9 @@ r.post("/", validators, async (req, res) => {
   const stakePoints = Number(req.body.amount);    // map "amount" -> stake_points
 
   try {
-    // Must be member of pool
+    // Must be member of pool - cast poolId to UUID
     const mem = await query(
-      `SELECT 1 FROM mm.pool_members WHERE pool_id=$1 AND user_id=$2 LIMIT 1`,
+      `SELECT 1 FROM mm.pool_members WHERE pool_id = $1::uuid AND user_id = $2 LIMIT 1`,
       [poolId, dbUserId]
     );
     if (mem.rowCount === 0) return res.status(403).json({ error: "Not a member of this pool" });
@@ -214,10 +224,11 @@ r.post("/", validators, async (req, res) => {
     const posted_odds = Math.max(1.1, Math.min(3.5, rawOdds)); // Clamp between 1.1 and 3.5
 
     // Check user balance (sum of all transactions for this pool)
+    // Cast poolId to UUID to ensure proper type matching
     const bal = await query(
       `SELECT COALESCE(SUM(amount_points), 0) as balance
        FROM mm.transactions
-       WHERE pool_id=$1 AND user_id=$2`,
+       WHERE pool_id = $1::uuid AND user_id = $2`,
       [poolId, dbUserId]
     );
     const currentBalance = Number(bal.rows?.[0]?.balance ?? 0);
@@ -236,11 +247,11 @@ r.post("/", validators, async (req, res) => {
     );
     const wagerId = ins.rows[0].wager_id;
 
-    // Record the wager stake as a transaction (negative amount)
+    // Record the wager stake as a transaction (negative amount) - cast poolId to UUID
     await query(
       `INSERT INTO mm.transactions
          (pool_id, user_id, tx_type, amount_points, wager_id, game_id, notes)
-       VALUES ($1, $2, 'WAGER_STAKE', $3, $4, $5, $6)`,
+       VALUES ($1::uuid, $2, 'WAGER_STAKE', $3, $4, $5, $6)`,
       [poolId, dbUserId, -stakePoints, wagerId, gameId, `Wager on game ${gameId}`]
     );
 

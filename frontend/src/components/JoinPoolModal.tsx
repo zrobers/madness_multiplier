@@ -5,9 +5,10 @@ type Props = {
   onClose: () => void;
   onJoined: () => void;
   currentUser?: string;
+  userId?: string;
 };
 
-export default function JoinPoolModal({ poolId, onClose, onJoined, currentUser }: Props) {
+export default function JoinPoolModal({ poolId, onClose, onJoined, currentUser, userId }: Props) {
   const [handle, setHandle] = useState(currentUser ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +26,14 @@ export default function JoinPoolModal({ poolId, onClose, onJoined, currentUser }
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/pools/${poolId}/join`, {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (userId) {
+        headers["X-User-Id"] = userId;
+      }
+      
+      const res = await fetch(`http://localhost:4000/api/pools/${poolId}/join`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ handle }),
       });
       const body = await res.json();
