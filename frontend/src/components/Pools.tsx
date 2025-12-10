@@ -18,9 +18,10 @@ type Props = {
   onOpenPool?: (poolId: string) => void;
   userName?: string | null;
   userId?: string | null;
+  onJoinedPool?: () => void;
 };
 
-export default function Pools({ onOpenPool, userName, userId }: Props) {
+export default function Pools({ onOpenPool, userName, userId, onJoinedPool }: Props) {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +150,7 @@ export default function Pools({ onOpenPool, userName, userId }: Props) {
           onJoined={() => {
             setMessage("Joined pool");
             fetchPools();
+            onJoinedPool?.();
             setTimeout(() => setMessage(null), 3000);
           }}
           currentUser={userName}

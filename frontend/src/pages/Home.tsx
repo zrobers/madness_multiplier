@@ -17,6 +17,8 @@ export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [refreshPoolsTrigger, setRefreshPoolsTrigger] = useState(0);
+
   const [activeTab, setActiveTab] = useState<
     "home" | "view-picks" | "submit-picks" | "pool-detail" | "how-it-works"
   >("home");
@@ -32,6 +34,29 @@ export default function HomePage() {
     setSelectedPoolId(poolId);
     setActiveTab("pool-detail");
   };
+
+  useEffect(() => {
+  if (!userId) return;
+
+  async function loadPools() {
+    const res = await fetch(`http://localhost:4000/api/pools/user`, {
+      headers: {
+        "X-User-Id": userId || "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+    setMyPools(data.pools || []);
+
+    if (data.pools?.length > 0 && !selectedPoolId) {
+      setSelectedPoolId(data.pools[0].pool_id);
+      setSelectedPoolName(data.pools[0].name);
+    }
+  }
+
+  loadPools();
+}, [userId, refreshPoolsTrigger]);  // <--- ADDED refreshPoolsTrigger
 
   // pick up name passed by login
   useEffect(() => {
@@ -69,33 +94,6 @@ export default function HomePage() {
 
     return () => unsubscribe();
   }, []);
-
-  // fetch user pools
-  useEffect(() => {
-    if (!userId) return;
-
-    async function loadPools() {
-      const res = await fetch(`http://localhost:4000/api/pools/user`, {
-        headers: {
-          "X-User-Id": userId || "",
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await res.json();
-
-      console.log("loaded user pools", data.pools);
-      setMyPools(data.pools || []);
-
-      // Auto-select first pool if available
-      if (data.pools?.length > 0 && !selectedPoolId) {
-        setSelectedPoolId(data.pools[0].pool_id);
-        setSelectedPoolName(data.pools[0].name);
-      }
-    }
-
-    loadPools();
-  }, [userId]);
 
   // protect tabs
   useEffect(() => {
@@ -233,6 +231,7 @@ export default function HomePage() {
                 onOpenPool={openPoolDetail}
                 userName={userName}
                 userId={userId}
+                onJoinedPool={() => setRefreshPoolsTrigger(x => x + 1)}  
               />
             </aside>
             <div className="centerSpacer" />
