@@ -52,9 +52,10 @@ interface Pool {
 interface SubmitPicksProps {
   userId: string;
   userName?: string | null;
+  poolId?: string | null; 
 }
 
-export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
+export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -63,7 +64,7 @@ export default function SubmitPicks({ userId, userName }: SubmitPicksProps) {
   const [wagers, setWagers] = useState<WagerForm[]>([]);
   const [pools, setPools] = useState<Pool[]>([]);
   const [poolsLoading, setPoolsLoading] = useState(true);
-  const [selectedPoolId, setSelectedPoolId] = useState<string>('');
+  const [selectedPoolId, setSelectedPoolId] = useState<string>(poolId || '');
 
   useEffect(() => {
     fetchPools();

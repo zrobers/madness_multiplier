@@ -1,3 +1,4 @@
+// ---------------- ViewPicks.tsx --------------------
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 
@@ -17,10 +18,6 @@ interface Wager {
   placed_at: string;
   status: string;
   payout_points?: number | null;
-  round_code?: string | number;
-  game_start_time?: string;
-  
-  // For display purposes
   isDemoData?: boolean;
 }
 
@@ -40,16 +37,18 @@ interface Pool {
 interface ViewPicksProps {
   userId: string;
   userName?: string | null;
+  poolId?: string | null;
 }
 
-export default function ViewPicks({ userId, userName }: ViewPicksProps) {
+export default function ViewPicks({ userId }: ViewPicksProps) {
   const [wagers, setWagers] = useState<Wager[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [hasDemoData, setHasDemoData] = useState(false);
+
   const [pools, setPools] = useState<Pool[]>([]);
   const [poolsLoading, setPoolsLoading] = useState(true);
-  const [selectedPoolId, setSelectedPoolId] = useState<string>('');
+  const [selectedPoolId, setSelectedPoolId] = useState('');
 
   useEffect(() => {
     fetchPools();
@@ -64,20 +63,25 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
   const fetchPools = async () => {
     try {
       setPoolsLoading(true);
-      const response = await axios.get('http://localhost:4000/api/pools/user', {
-        headers: {
-          'X-User-Id': userId,
-          'Content-Type': 'application/json'
+      const response = await axios.get(
+        `http://localhost:4000/api/pools/user`,
+        {
+          headers: {
+            'X-User-Id': userId,
+            'Content-Type': 'application/json',
+          },
         }
-      });
-      setPools(response.data.pools || []);
-      if (response.data.pools && response.data.pools.length > 0 && !selectedPoolId) {
-        setSelectedPoolId(response.data.pools[0].pool_id);
+      );
+
+      const ps = response.data.pools || [];
+      setPools(ps);
+
+      if (ps.length > 0 && !selectedPoolId) {
+        setSelectedPoolId(ps[0].pool_id);
       }
-    } catch (err: any) {
-      console.error('Error fetching pools:', err);
-      setPools([]); // Set empty pools array on error
-      // Don't set error here as it prevents the page from loading
+    } catch (err) {
+      console.error('Error fetching pools', err);
+      setPools([]);
     } finally {
       setPoolsLoading(false);
     }
@@ -85,60 +89,88 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
 
   const fetchWagers = async () => {
     try {
+      if (!selectedPoolId) return;
+
       setLoading(true);
       setError('');
-      
-      const allWagers: Wager[] = [];
-      
-      // Try to fetch real wagers from API
-      if (!selectedPoolId) return;
+
+      const all: Wager[] = [];
+
+      //
+      // REAL DB wagers
+      //
       try {
-        console.log('Fetching wagers for userId:', userId, 'poolId:', selectedPoolId);
-        const response = await axios.get(`http://localhost:4000/api/wagers`, {
-          params: { userId, poolId: selectedPoolId },
-          headers: { 
-            'X-User-Id': userId,
-            'Content-Type': 'application/json'
+        const response = await axios.get(
+          `http://localhost:4000/api/wagers`,
+          {
+            params: { userId, poolId: selectedPoolId },
+            headers: {
+              'X-User-Id': userId,
+              'Content-Type': 'application/json',
+            },
           }
-        });
-        
-        console.log('Wagers API response:', response.data);
-        
-        if (response.data && Array.isArray(response.data.wagers)) {
-          console.log('Found', response.data.wagers.length, 'wagers from API');
-          allWagers.push(...response.data.wagers.map((w: any) => ({ ...w, isDemoData: false })));
+        );
+
+        if (Array.isArray(response.data.wagers)) {
+          all.push(
+            ...response.data.wagers.map((w: any) => ({
+              ...w,
+              isDemoData: false,
+            }))
+          );
         }
-      } catch (apiError: any) {
-        console.error('Could not fetch wagers from API:', apiError.response?.data || apiError.message);
+      } catch (e) {
+        console.error('Error fetching real wagers', e);
       }
-      
-      // Load demo wagers from localStorage
-      const demoWagersJson = localStorage.getItem('demoWagers');
-      if (demoWagersJson) {
+
+      //
+      // DEMO WAGERS filtered by this pool
+      //
+      const rawDemo = localStorage.getItem('demoWagers');
+      if (rawDemo) {
         try {
-          const demoWagers = JSON.parse(demoWagersJson);
-          if (Array.isArray(demoWagers) && demoWagers.length > 0) {
-            allWagers.push(...demoWagers.map((w: any) => ({ ...w, isDemoData: true })));
-            setHasDemoData(true);
+          const demoArr = JSON.parse(rawDemo);
+          if (Array.isArray(demoArr)) {
+            const onlyThisPool = demoArr.filter(
+              (dw: any) => dw.pool_id === selectedPoolId
+            );
+
+            if (onlyThisPool.length > 0) {
+              all.push(
+                ...onlyThisPool.map((dw: any) => ({
+                  ...dw,
+                  isDemoData: true,
+                }))
+              );
+              setHasDemoData(true);
+            }
           }
-        } catch (parseError) {
-          console.error('Error parsing demo wagers:', parseError);
+        } catch (err2) {
+          console.error('Error parsing demo wagers', err2);
         }
       }
-      
-      // Sort by placed_at (newest first)
-      allWagers.sort((a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime());
-      
-      setWagers(allWagers);
-      setLoading(false);
-    } catch (err: any) {
-      console.error('Error fetching wagers:', err);
+
+      all.sort(
+        (a, b) =>
+          new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
+      );
+
+      setWagers(all);
+    } catch (err) {
+      console.error(err);
       setError('Failed to load your picks');
+    } finally {
       setLoading(false);
     }
   };
 
-  const getWagerStatusColor = (status: string) => {
+  const clearDemoData = () => {
+    localStorage.removeItem('demoWagers');
+    setHasDemoData(false);
+    fetchWagers();
+  };
+
+  const getColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'WON':
         return '#16a34a';
@@ -147,35 +179,9 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
       case 'OPEN':
       case 'PENDING':
         return '#3b82f6';
-      case 'DEMO':
-        return '#f59e0b';
       default:
         return '#64748b';
     }
-  };
-
-  const getWagerStatusText = (wager: Wager) => {
-    if (wager.status === 'DEMO') {
-      return '⚠️ DEMO DATA';
-    }
-    
-    switch (wager.status.toUpperCase()) {
-      case 'WON':
-        return `Won +${wager.payout_points?.toFixed(2)} pts`;
-      case 'LOST':
-        return `Lost -${wager.stake_points.toFixed(2)} pts`;
-      case 'OPEN':
-      case 'PENDING':
-        return 'Pending';
-      default:
-        return wager.status;
-    }
-  };
-
-  const clearDemoData = () => {
-    localStorage.removeItem('demoWagers');
-    setHasDemoData(false);
-    fetchWagers();
   };
 
   if (loading) {
@@ -190,25 +196,22 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
     <div className="card">
       <div className="cardTitle">Your Picks</div>
 
-      {/* Pool Selection */}
-      <div className="pool-selection" style={{ marginBottom: '16px' }}>
-        <label htmlFor="pool-select-view" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-          Select Pool:
-        </label>
+      {/* POOL SELECT */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ fontWeight: '700' }}>Select Pool:</label>
         {poolsLoading ? (
           <div>Loading pools...</div>
         ) : pools.length === 0 ? (
-          <div className="warning-message">No pools available. Your wagers will appear here once you join a pool.</div>
+          <div>No pools yet</div>
         ) : (
           <select
-            id="pool-select-view"
             value={selectedPoolId}
             onChange={(e) => setSelectedPoolId(e.target.value)}
-            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
+            style={{ marginLeft: 8 }}
           >
-            {pools.map((pool) => (
-              <option key={pool.pool_id} value={pool.pool_id}>
-                {pool.name} ({pool.initial_points} pts)
+            {pools.map((p) => (
+              <option key={p.pool_id} value={p.pool_id}>
+                {p.name} ({p.initial_points} pts)
               </option>
             ))}
           </select>
@@ -216,121 +219,50 @@ export default function ViewPicks({ userId, userName }: ViewPicksProps) {
       </div>
 
       {hasDemoData && (
-        <div className="warning-message" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>⚠️ Some picks are using DEMO DATA (not saved to database)</span>
-          <button 
-            onClick={clearDemoData}
-            style={{
-              padding: '4px 12px',
-              fontSize: '12px',
-              background: '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Clear Demo Data
+        <div style={{ marginBottom: 12 }}>
+          ⚠️ Some wagers are demo data.
+          <button onClick={clearDemoData} style={{ marginLeft: 12 }}>
+            Clear Demo
           </button>
         </div>
       )}
-      
-      {error && <div className="error-message">{error}</div>}
-      
+
+      {error && <div>{error}</div>}
+
       {wagers.length === 0 ? (
-        <div className="no-picks-message">
-          <p>You haven't placed any wagers yet.</p>
-          <p>Go to <strong>Submit Picks</strong> to place your first wager!</p>
-        </div>
+        <div>You have no wagers in this pool.</div>
       ) : (
         <div className="picks-list">
-          {wagers.map((wager) => (
-            <div 
-              key={wager.wager_id} 
+          {wagers.map((w) => (
+            <div
+              key={w.wager_id}
               className="pick-card"
-              style={wager.isDemoData ? { border: '2px solid #f59e0b', background: '#fffbeb' } : {}}
+              style={
+                w.isDemoData
+                  ? { border: '2px solid #f59e0b', background: '#fffbeb' }
+                  : {}
+              }
             >
-              <div className="pick-header">
-                <div className="game-info">
-                  <span className="game-matchup">
-                    {wager.picked_team_name && wager.opponent_team_name ? (
-                      `${wager.picked_team_name} vs ${wager.opponent_team_name}`
-                    ) : (
-                      `Game #${wager.game_id}`
-                    )}
-                  </span>
-                  <span className="pick-time">
-                    {new Date(wager.placed_at).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
-                <div 
-                  className="pick-status"
-                  style={{ color: getWagerStatusColor(wager.status) }}
-                >
-                  {getWagerStatusText(wager)}
-                </div>
+              <b>
+                #{w.picked_seed} {w.picked_team_name} vs #{w.opp_seed}{' '}
+                {w.opponent_team_name}
+              </b>
+              <div>
+                Stake {w.stake_points} @ {w.posted_odds}x
               </div>
-              
-              <div className="pick-details">
-                <div className="pick-detail-item">
-                  <span className="label">Your Pick:</span>
-                  <span className="value">
-                    #{wager.picked_seed} {wager.picked_team_name || `Team ${wager.picked_team_id}`}
-                  </span>
-                </div>
-                <div className="pick-detail-item">
-                  <span className="label">Opponent:</span>
-                  <span className="value">
-                    #{wager.opp_seed} {wager.opponent_team_name || 'Opponent'}
-                  </span>
-                </div>
-                <div className="pick-detail-item">
-                  <span className="label">Wager:</span>
-                  <span className="value">{wager.stake_points.toFixed(2)} points</span>
-                </div>
-                <div className="pick-detail-item">
-                  <span className="label">Odds:</span>
-                  <span className="value">{wager.posted_odds.toFixed(2)}x</span>
-                </div>
-                <div className="pick-detail-item">
-                  <span className="label">Potential Payout:</span>
-                  <span className="value highlight">
-                    {((wager.expected_payout || (wager.stake_points * wager.posted_odds))).toFixed(2)} points
-                  </span>
-                </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  color: getColor(w.status),
+                  fontWeight: 600,
+                }}
+              >
+                {w.status}
               </div>
             </div>
           ))}
         </div>
       )}
-      
-      <div className="picks-summary">
-        <div className="summary-stat">
-          <span className="stat-label">Total Wagers:</span>
-          <span className="stat-value">{wagers.length}</span>
-        </div>
-        <div className="summary-stat">
-          <span className="stat-label">Total Staked:</span>
-          <span className="stat-value">
-            {wagers.reduce((sum, w) => sum + w.stake_points, 0).toFixed(2)} pts
-          </span>
-        </div>
-        <div className="summary-stat">
-          <span className="stat-label">Potential Winnings:</span>
-          <span className="stat-value">
-            {wagers
-              .filter(w => w.status.toUpperCase() === 'OPEN' || w.status.toUpperCase() === 'PENDING')
-              .reduce((sum, w) => sum + (w.stake_points * w.posted_odds), 0)
-              .toFixed(2)} pts
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
-

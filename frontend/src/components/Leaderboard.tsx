@@ -3,12 +3,12 @@ import { leaderboard } from "../data/mock";
 
 type Row = { user: string; initials: string; points: number; rank?: number };
 
-export default function Leaderboard() {
-  const [realLeaderboard, setLeaderboard] = useState<Row[] | null>(null); // change name once real data is fetched
+export default function Leaderboard({ poolId }: { poolId: string | null }) {
+  const [realLeaderboard, setLeaderboard] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // skeleton uses first 12; replace with real data later
+  // fallback mock rows
   const mockRows: Row[] = leaderboard.map((r) => ({
     user: r.user,
     initials:
@@ -23,15 +23,22 @@ export default function Leaderboard() {
   }));
 
   useEffect(() => {
+    if (!poolId) {
+      setLeaderboard(null); // no pool yet
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const poolId = "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66";
-        const response = await fetch(`http://localhost:4000/api/leaderboard?poolId=${poolId}`);
+        const response = await fetch(
+          `http://localhost:4000/api/leaderboard?poolId=${poolId}`
+        );
+
         if (!response.ok) {
-          throw new Error(`Error fetching leaderboard: ${response.statusText}`);
+          throw new Error(`Error fetching leaderboard`);
         }
         const data = await response.json();
 
@@ -46,12 +53,23 @@ export default function Leaderboard() {
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Unknown error");
+        setLeaderboard(null);
       } finally {
         setLoading(false);
       }
     };
+
     fetchLeaderboard();
-  }, []);
+  }, [poolId]); // 👈 re-fetch whenever pool changes
+
+  if (!poolId) {
+    return (
+      <div className="card" >
+        <div className="lbHeader">LEADERBOARD</div>
+        <p style={{"marginLeft": 10}}>Select a pool to view standings.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div>Loading leaderboard...</div>;

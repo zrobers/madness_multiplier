@@ -88,6 +88,71 @@ body {
   font-weight: 500;
 }
 
+
+/* ---------------- Tabs ---------------- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: none;
+  position: relative;
+  background: transparent;
+  z-index: 10;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.tab {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.tab.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+.user-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.pool-select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #111827;          /* match tabs */
+  height: 36px;            /* match tab height */
+  line-height: 14px;
+  appearance: none;
+  margin-right: 8px;
+
+  /* make it pill-like like the tabs */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* active, same as active tab */
+.pool-select.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
 /* ---------------- Layout (per sketch) ---------------- */
 .topRow {
   margin-top: 16px;

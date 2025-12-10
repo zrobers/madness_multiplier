@@ -15,19 +15,25 @@ import ViewPicks from "./ViewPicks";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"home" | "view-picks" | "submit-picks" | "pool-detail" | "how-it-works">("home");
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<
+    "home" | "view-picks" | "submit-picks" | "pool-detail" | "how-it-works"
+  >("home");
+
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
+  const [myPools, setMyPools] = useState<any[]>([]);
+  const [selectedPoolName, setSelectedPoolName] = useState<string>("");
 
   const openPoolDetail = (poolId: string) => {
     setSelectedPoolId(poolId);
-    setActiveTab('pool-detail');
+    setActiveTab("pool-detail");
   };
 
-  const location = useLocation();
-
-  // 1) Pick up name passed from Login (navigate("/", { state: { userName } }))
+  // pick up name passed by login
   useEffect(() => {
     const state = location.state as { userName?: string } | null;
     if (state?.userName) {
@@ -35,50 +41,72 @@ export default function HomePage() {
     }
   }, [location.state]);
 
-  // 2) Listen to Firebase auth so refresh still knows who we are
+  // watch firebase user + get handle
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (user) {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setUserName(null);
+        setUserId(null);
+        return;
+      }
+
       setUserId(user.uid);
-      
-      // Always fetch handle from database first (this is the username)
-      // Email is linked via user_id, so we can get the handle reliably
+
       try {
-        const res = await fetch(`http://localhost:4000/api/auth/user/${user.uid}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.handle) {
-            setUserName(data.handle); // Use handle (username) from database
-          } else {
-            // Fallback only if handle doesn't exist in DB
-            setUserName(user.displayName || user.email || 'User');
-          }
+        const res = await fetch(
+          `http://localhost:4000/api/auth/user/${user.uid}`
+        );
+        const data = await res.json();
+        if (data?.handle) {
+          setUserName(data.handle);
         } else {
-          // If user not found in DB, fallback to Firebase display name or email
-          setUserName(user.displayName || user.email || 'User');
+          setUserName(user.displayName || user.email || "User");
         }
       } catch (err) {
-        console.error("Could not fetch user handle from backend:", err);
-        // Fallback to Firebase display name or email if fetch fails
-        setUserName(user.displayName || user.email || 'User');
+        setUserName(user.displayName || user.email || "User");
       }
-    } else {
-      setUserName(null);
-      setUserId(null);
-    }
-  });
-  return () => unsubscribe();
-}, []);
+    });
 
-  // 3) Redirect to login if trying to access authenticated pages without being logged in
+    return () => unsubscribe();
+  }, []);
+
+  // fetch user pools
   useEffect(() => {
-    if ((activeTab === "view-picks" || activeTab === "submit-picks") && !userName) {
+    if (!userId) return;
+
+    async function loadPools() {
+      const res = await fetch(`http://localhost:4000/api/pools/user`, {
+        headers: {
+          "X-User-Id": userId || "",
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+
+      console.log("loaded user pools", data.pools);
+      setMyPools(data.pools || []);
+
+      if (data.pools?.length === 1) {
+        setSelectedPoolId(data.pools[0].pool_id);
+        setSelectedPoolName(data.pools[0].name); // backend returns name, not pool_name
+      }
+    }
+
+    loadPools();
+  }, [userId]);
+
+  // protect tabs
+  useEffect(() => {
+    if (
+      (activeTab === "view-picks" || activeTab === "submit-picks") &&
+      !userName
+    ) {
       navigate("/login");
     }
   }, [activeTab, userName, navigate]);
 
-  const handleTabClick = (tab: "home" | "view-picks" | "submit-picks" | "pool-detail" |"how-it-works") => {
-    // Require authentication for view-picks and submit-picks
+  const handleTabClick = (tab: any) => {
     if ((tab === "view-picks" || tab === "submit-picks") && !userName) {
       navigate("/login");
       return;
@@ -96,59 +124,100 @@ export default function HomePage() {
     <div className="container">
       <div className="appHeader">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <img src="/mm_logo_v1.jpg" alt="Madness Multiplier Logo" className="logo" />
-          <h1
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "700",
-              color: "#1f2937",
-              margin: 0,
-              letterSpacing: "1px",
-            }}
-          >
+          <img
+            src="/mm_logo_v1.jpg"
+            alt="Madness Multiplier Logo"
+            className="logo"
+          />
+          <h1 style={{ fontSize: "1.5rem", fontWeight: "700" }}>
             MADNESS MULTIPLIER
           </h1>
         </div>
-
-        <header className="tabs">
-          <button className={`tab ${activeTab === "home" ? "active" : ""}`} onClick={() => handleTabClick("home")}>
-            Home
-          </button>
-            {userName && (
-            <>
-              <button
-                className={`tab ${activeTab === "view-picks" ? "active" : ""}`}
-                onClick={() => handleTabClick("view-picks")}
-              >
-                View Picks
-              </button>
-              <button
-                className={`tab ${activeTab === "submit-picks" ? "active" : ""}`}
-                onClick={() => handleTabClick("submit-picks")}
-              >
-                Submit Picks
-              </button>
-            </>
+        {/* TOP MENU = pool dropdown + tabs */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginLeft: "auto",
+          }}
+        >
+          {/* POOL DROPDOWN */}
+          {userId && myPools.length > 0 && (
+            <select
+              className={`pool-select ${selectedPoolId ? "active" : ""}`}
+              value={selectedPoolId ?? ""}
+              onChange={(e) => {
+                setSelectedPoolId(e.target.value);
+                const pool = myPools.find((p) => p.pool_id === e.target.value);
+                setSelectedPoolName(pool?.name || "");
+              }}
+            >
+              <option value="">Select pool…</option>
+              {myPools.map((p) => (
+                <option key={p.pool_id} value={p.pool_id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           )}
-          <button
-            className={`tab ${activeTab === "how-it-works" ? "active" : ""}`}
-            onClick={() => handleTabClick("how-it-works")}
-          >
-            How It Works
-          </button>
-        </header>
 
-        {/* Right side: either Login/Register or user pill + logout */}
+          {/* TABS */}
+          <header className="tabs">
+            <button
+              className={`tab ${activeTab === "home" ? "active" : ""}`}
+              onClick={() => handleTabClick("home")}
+            >
+              Home
+            </button>
+
+            {userName && (
+              <>
+                <button
+                  className={`tab ${
+                    activeTab === "view-picks" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("view-picks")}
+                >
+                  View Picks
+                </button>
+
+                <button
+                  className={`tab ${
+                    activeTab === "submit-picks" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("submit-picks")}
+                >
+                  Submit Picks
+                </button>
+              </>
+            )}
+
+            <button
+              className={`tab ${activeTab === "how-it-works" ? "active" : ""}`}
+              onClick={() => handleTabClick("how-it-works")}
+            >
+              How It Works
+            </button>
+          </header>
+        </div>
+
+        {/* RIGHT SIDE */}
         {userName ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span className="user-pill">Hi, {userName}</span>
-            <button className="loginButton" onClick={handleLogout}>Logout</button>
+            <button className="loginButton" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         ) : (
-          <button className="loginButton" onClick={() => navigate("/login")}>Login / Register</button>
+          <button className="loginButton" onClick={() => navigate("/login")}>
+            Login / Register
+          </button>
         )}
       </div>
 
+      {/* HOME */}
       {activeTab === "home" && (
         <>
           <section className="topRow">
@@ -157,42 +226,50 @@ export default function HomePage() {
 
           <section className="belowGrid">
             <aside className="left">
-              <Leaderboard />
+              <Leaderboard poolId={selectedPoolId} />
               <div style={{ height: 12 }} />
-              <Pools onOpenPool={openPoolDetail} userName={userName} userId={userId}/>
+              <Pools
+                onOpenPool={openPoolDetail}
+                userName={userName}
+                userId={userId}
+              />
             </aside>
-            <div className="centerSpacer" aria-hidden />
+            <div className="centerSpacer" />
             <aside className="right">
-              <div className="bracket-full-width">
-                <Bracket />
-              </div>
+              <Bracket 
+                userId={userId} 
+                userName={userName}
+                poolId={selectedPoolId} />
             </aside>
           </section>
 
-          <section style={{ marginTop: '24px', width: '100%' }}>
-            <LiveScores />
-          </section>
+          <LiveScores />
         </>
       )}
 
-      {activeTab === 'view-picks' && userId && (
-        <ViewPicks userId={userId} userName={userName} />
+      {activeTab === "view-picks" && userId && (
+        <ViewPicks
+          userId={userId}
+          userName={userName}
+          poolId={selectedPoolId}
+        />
       )}
 
-      {activeTab === 'submit-picks' && userId && (
-        <SubmitPicks userId={userId} userName={userName} />
+      {activeTab === "submit-picks" && userId && (
+        <SubmitPicks
+          userId={userId}
+          userName={userName}
+          poolId={selectedPoolId}
+        />
       )}
 
-      {activeTab === 'how-it-works' && (
-        <HowItWorks />
-      )}
+      {activeTab === "how-it-works" && <HowItWorks />}
 
-      {activeTab === 'pool-detail' && selectedPoolId && (
-        <section className="belowGrid pool-detail">
-          <div style={{ width: '100%' }}>
-            <PoolDetail poolId={selectedPoolId} onBack={() => setActiveTab('home')} />
-          </div>
-        </section>
+      {activeTab === "pool-detail" && selectedPoolId && (
+        <PoolDetail
+          poolId={selectedPoolId}
+          onBack={() => setActiveTab("home")}
+        />
       )}
     </div>
   );

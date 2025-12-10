@@ -58,7 +58,13 @@ interface GameWager {
   payout_points?: number | null;
 }
 
-export default function Bracket() {
+interface BracketProps {
+  poolId: string | null;
+  userId: string | null;
+  userName?: string | null;
+}
+
+export default function Bracket({ userId, userName, poolId }: BracketProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +74,9 @@ export default function Bracket() {
   const [amount, setAmount] = useState<string>("");
   const [wagerError, setWagerError] = useState<string>("");
   const [wagerSuccess, setWagerSuccess] = useState<string>("");
-  const [currentGameWagers, setCurrentGameWagers] = useState<GameWager[] | null>(null);
+  const [currentGameWagers, setCurrentGameWagers] = useState<
+    GameWager[] | null
+  >(null);
   const [wagersLoading, setWagersLoading] = useState(false);
 
   useEffect(() => {
@@ -98,12 +106,12 @@ export default function Bracket() {
   // ---------- transform raw games -> bracket matches ----------
 
   const createBracketMatches = (): BracketMatch[] => {
-    console.log('Creating bracket matches for', games.length, 'total games');
+    console.log("Creating bracket matches for", games.length, "total games");
     const bracketMatches: BracketMatch[] = [];
 
     // Only add Round of 64 games from DB (avoid duplicates with synthetic Round of 32)
     const round64Games = games.filter((game) => game.round_code === 1);
-    console.log('Found', round64Games.length, 'Round of 64 games to display');
+    console.log("Found", round64Games.length, "Round of 64 games to display");
 
     round64Games.forEach((game) => {
       const isFinal = game.status === "FINAL";
@@ -145,27 +153,32 @@ export default function Bracket() {
         gameNo: g.game_no,
       }));
 
-    const winnersByRegion = round64Winners.reduce(
-      (acc, w) => {
-        if (!acc[w.region]) acc[w.region] = [];
-        acc[w.region].push(w);
-        return acc;
-      },
-      {} as Record<string, typeof round64Winners>
-    );
+    const winnersByRegion = round64Winners.reduce((acc, w) => {
+      if (!acc[w.region]) acc[w.region] = [];
+      acc[w.region].push(w);
+      return acc;
+    }, {} as Record<string, typeof round64Winners>);
 
-    console.log('Winners by region:', Object.keys(winnersByRegion));
+    console.log("Winners by region:", Object.keys(winnersByRegion));
 
     Object.entries(winnersByRegion).forEach(([region, winners]) => {
       const sorted = winners.sort((a, b) => a.gameNo - b.gameNo);
-      console.log(`Region ${region}: ${winners.length} winners, creating ${Math.floor(winners.length / 2)} Round of 32 games`);
+      console.log(
+        `Region ${region}: ${winners.length} winners, creating ${Math.floor(
+          winners.length / 2
+        )} Round of 32 games`
+      );
 
       for (let i = 0; i < sorted.length; i += 2) {
         if (i + 1 >= sorted.length) break;
         const teamA = sorted[i];
         const teamB = sorted[i + 1];
 
-        console.log(`Creating R32 game: ${region} Game ${Math.floor(i / 2) + 1} - ${teamA.name} vs ${teamB.name}`);
+        console.log(
+          `Creating R32 game: ${region} Game ${Math.floor(i / 2) + 1} - ${
+            teamA.name
+          } vs ${teamB.name}`
+        );
 
         bracketMatches.push({
           id: 10000 + region.charCodeAt(0) * 100 + i,
@@ -191,7 +204,7 @@ export default function Bracket() {
       }
     });
 
-    console.log('Total bracket matches created:', bracketMatches.length);
+    console.log("Total bracket matches created:", bracketMatches.length);
     return bracketMatches;
   };
 
@@ -202,15 +215,12 @@ export default function Bracket() {
   const finalsMatches = allMatches.filter((m) => m.round >= 5);
 
   // group regional by region + round
-  const matchesByRegionAndRound = regionalMatches.reduce(
-    (acc, match) => {
-      if (!acc[match.region]) acc[match.region] = {};
-      if (!acc[match.region][match.round]) acc[match.region][match.round] = [];
-      acc[match.region][match.round].push(match);
-      return acc;
-    },
-    {} as Record<string, Record<number, BracketMatch[]>>
-  );
+  const matchesByRegionAndRound = regionalMatches.reduce((acc, match) => {
+    if (!acc[match.region]) acc[match.region] = {};
+    if (!acc[match.region][match.round]) acc[match.region][match.round] = [];
+    acc[match.region][match.round].push(match);
+    return acc;
+  }, {} as Record<string, Record<number, BracketMatch[]>>);
 
   Object.keys(matchesByRegionAndRound).forEach((region) => {
     Object.keys(matchesByRegionAndRound[region]).forEach((roundStr) => {
@@ -222,14 +232,11 @@ export default function Bracket() {
   });
 
   // group finals by round (5 = Final Four, 6 = Championship)
-  const finalsByRound = finalsMatches.reduce(
-    (acc, match) => {
-      if (!acc[match.round]) acc[match.round] = [];
-      acc[match.round].push(match);
-      return acc;
-    },
-    {} as Record<number, BracketMatch[]>
-  );
+  const finalsByRound = finalsMatches.reduce((acc, match) => {
+    if (!acc[match.round]) acc[match.round] = [];
+    acc[match.round].push(match);
+    return acc;
+  }, {} as Record<number, BracketMatch[]>);
 
   const getRoundName = (round: number): string => {
     const roundNames: Record<number, string> = {
@@ -257,12 +264,10 @@ export default function Bracket() {
     if (match.status !== "SCHEDULED") {
       setWagersLoading(true);
       try {
-        const userId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"; // DEV user (zach)
-        const poolId = "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66"; // DEV pool
-
+        console.log(userId, poolId, match.id);
         const params = new URLSearchParams({
-          userId,
-          poolId,
+          userId: userId ?? "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+          poolId: poolId ?? "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66",
           gameId: String(match.id),
         });
 
@@ -270,7 +275,7 @@ export default function Bracket() {
           `http://localhost:4000/api/wagers?${params.toString()}`,
           {
             headers: {
-              "X-User-Id": userId,
+              "X-User-Id": userId || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
               "Content-Type": "application/json",
             },
           }
@@ -304,9 +309,18 @@ export default function Bracket() {
     }
   };
 
-  const handlePlaceWager = () => {
+  const handlePlaceWager = async () => {
     if (!selectedMatch || selectedMatch.status !== "SCHEDULED") return;
     if (!selectedTeamId || !amount) return;
+
+    console.log("placeWager", {
+      poolId,
+      gameId: selectedMatch.id,
+      teamId: selectedTeamId,
+      amount,
+      userName,
+    } 
+    )
 
     const amt = Number(amount);
     if (isNaN(amt) || amt <= 0) {
@@ -315,14 +329,39 @@ export default function Bracket() {
       return;
     }
 
-    console.log("Placing wager", {
-      gameId: selectedMatch.id,
-      teamId: selectedTeamId,
-      amount: amt,
-    });
+    try {
+      setWagerError("");
+      setWagerSuccess("");
 
-    setWagerError("");
-    setWagerSuccess("Wager saved (demo only)");
+      const response = await fetch("http://localhost:4000/api/wagers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Id": userId || "",
+        },
+        body: JSON.stringify({
+          poolId,
+          gameId: selectedMatch.id,
+          teamId: selectedTeamId,
+          amount: amt,
+          userName,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to place wager");
+      }
+
+      setWagerSuccess("Wager placed!");
+
+      // reset UI
+      setSelectedTeamId(null);
+      setAmount("");
+    } catch (err: any) {
+      console.error("Error placing wager", err);
+      setWagerError(err.message || "Failed to place wager");
+    }
   };
 
   const renderMatch = (match: BracketMatch) => {
@@ -416,7 +455,9 @@ export default function Bracket() {
                 <div className="team-options">
                   <label
                     className={`team-option ${
-                      selectedTeamId === selectedMatch.teamA.id ? "selected" : ""
+                      selectedTeamId === selectedMatch.teamA.id
+                        ? "selected"
+                        : ""
                     }`}
                   >
                     <input
@@ -424,9 +465,7 @@ export default function Bracket() {
                       name="team"
                       value={selectedMatch.teamA.id}
                       checked={selectedTeamId === selectedMatch.teamA.id}
-                      onChange={() =>
-                        setSelectedTeamId(selectedMatch.teamA.id)
-                      }
+                      onChange={() => setSelectedTeamId(selectedMatch.teamA.id)}
                     />
                     <div className="team-info">
                       <span className="seed">
@@ -438,7 +477,9 @@ export default function Bracket() {
 
                   <label
                     className={`team-option ${
-                      selectedTeamId === selectedMatch.teamB.id ? "selected" : ""
+                      selectedTeamId === selectedMatch.teamB.id
+                        ? "selected"
+                        : ""
                     }`}
                   >
                     <input
@@ -446,9 +487,7 @@ export default function Bracket() {
                       name="team"
                       value={selectedMatch.teamB.id}
                       checked={selectedTeamId === selectedMatch.teamB.id}
-                      onChange={() =>
-                        setSelectedTeamId(selectedMatch.teamB.id)
-                      }
+                      onChange={() => setSelectedTeamId(selectedMatch.teamB.id)}
                     />
                     <div className="team-info">
                       <span className="seed">
