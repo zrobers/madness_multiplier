@@ -1,6 +1,5 @@
-// ---------------- ViewPicks.tsx --------------------
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface Wager {
   wager_id: string | number;
@@ -184,6 +183,44 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
     }
   };
 
+  const analytics = useMemo(() => {
+    const total = wagers.length;
+    const byStatus: Record<string, number> = {};
+    let totalStake = 0;
+    let totalPayouts = 0;
+    let totalExpected = 0;
+
+    for (const w of wagers) {
+      const s = (w.status || 'UNKNOWN').toUpperCase();
+      byStatus[s] = (byStatus[s] || 0) + 1;
+      totalStake += Number(w.stake_points || 0);
+      // payout_points might be null for non-resolved wagers
+      totalPayouts += Number(w.payout_points || 0);
+      totalExpected += Number(w.expected_payout || 0);
+    }
+
+    const wins = byStatus['WON'] || 0;
+    const losses = byStatus['LOST'] || 0;
+    const open = (byStatus['OPEN'] || 0) + (byStatus['PENDING'] || 0);
+    const winRate = total > 0 ? (wins / total) * 100 : 0;
+    const avgStake = total > 0 ? totalStake / total : 0;
+    const netPoints = totalPayouts - totalStake; // realized profit (only resolved wagers with payout_points)
+
+    return {
+      total,
+      wins,
+      losses,
+      open,
+      winRate: Math.round(winRate * 10) / 10,
+      totalStake,
+      avgStake: Math.round(avgStake * 10) / 10,
+      totalPayouts,
+      netPoints,
+      byStatus,
+      totalExpected: Math.round(totalExpected * 10) / 10,
+    };
+  }, [wagers]);
+
   if (loading) {
     return (
       <div className="card">
@@ -228,6 +265,29 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
       )}
 
       {error && <div>{error}</div>}
+
+      {/* Analytics panel */}
+      <div style={{ marginBottom: 12, display: 'flex', gap: 12 }}>
+        <div style={{ padding: 12, borderRadius: 8, background: '#f8fafc', flex: '0 0 260px' }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Picks Analytics</div>
+          <div>Total picks: {analytics.total}</div>
+          <div>Won: {analytics.wins}</div>
+          <div>Lost: {analytics.losses}</div>
+          <div>Open/Pending: {analytics.open}</div>
+          <div>Win rate: {analytics.winRate}%</div>
+        </div>
+
+        <div style={{ padding: 12, borderRadius: 8, background: '#f8fafc', flex: 1 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Stakes & Payouts</div>
+          <div>Total staked: {analytics.totalStake} pts</div>
+          <div>Average stake: {analytics.avgStake} pts</div>
+          <div>Total realized payouts: {analytics.totalPayouts} pts</div>
+          <div>Net realized points: {analytics.netPoints} pts</div>
+          <div style={{ marginTop: 6, fontSize: 12, color: '#475569' }}>
+            (Expected payouts for open picks: {analytics.totalExpected} pts)
+          </div>
+        </div>
+      </div>
 
       {wagers.length === 0 ? (
         <div>You have no wagers in this pool.</div>
