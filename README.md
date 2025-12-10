@@ -108,41 +108,41 @@ Madness Multiplier is a database-backed website that reimagines the excitement o
 Progress Since Milestone 4: 
 
 Zach: 
-Compiled a complete dataset of 2024 March madness games compatible with the existing schema 
-Worked on a proof of concept for pulling live score data via an external API (right now using SportsDB)
-Due to limits on SportsDB API for live score integration, transitioned the live scores controller to use the NCAA API (henrygd/ncaa-api)
-Enhanced frontend for live scores
+- Compiled a complete dataset of 2024 March madness games compatible with the existing schema 
+- Worked on a proof of concept for pulling live score data via an external API (right now using SportsDB)
+- Due to limits on SportsDB API for live score integration, transitioned the live scores controller to use the NCAA API (henrygd/ncaa-api)
+- Enhanced frontend for live scores
 
 
 Justin:
-Added pop up to tournament bracket so that past games show your wagers and future games allow you to wager 
-Added current user and logout to the home page  once you 
-Updated login/register UI
-Added tabbed pools so that users can switch between their pools on the various web pages as well as place/view wagers for different pools
-Fixed home page bugs
+- Added pop up to tournament bracket so that past games show your wagers and future games allow you to wager 
+- Added current user and logout to the home page  once you 
+- Updated login/register UI
+- Added tabbed pools so that users can switch between their pools on the various web pages as well as place/view wagers for different pools
+- Fixed home page bugs
 
 
 Andrew: 
-Added more information to the registration page including first and last name. 
-Connected registration to the database to input all fields correctly including creating and inserting initials and username. 
-Test register cases and added error messages for duplicate usernames/emails.
-Added custom username field instead of auto-generated with backend handling in register screen.
-Added forgot password functionality on the login screen.
+- Added more information to the registration page including first and last name. 
+- Connected registration to the database to input all fields correctly including creating and inserting initials and username. 
+- Test register cases and added error messages for duplicate usernames/emails.
+- Added custom username field instead of auto-generated with backend handling in register screen.
+- Added forgot password functionality on the login screen.
 
 Logan: 
-Implemented three new Pools APIs. 
-Integrated into home screen and added several pages and components for proper pool creation and joining
-Fixed bugs with pool joining
-Implemented betting analytics into view picks page
+- Implemented three new Pools APIs. 
+- Integrated into home screen and added several pages and components for proper pool creation and joining
+- Fixed bugs with pool joining
+- Implemented betting analytics into view picks page
 
 
 Charlie:
-Updated submit picks page so that it is unique for each user and is linked to the account that is logged in
-Added logic to adjust the amount of points available to bet depending on amount wagered
-Updated the view picks page to only show the wagers made by the logged in user
-Allowed users to tab between pools on the submit picks and view picks page
-Fixed logic so user points are separate for each pool
-Updated view picks frontend
+- Updated submit picks page so that it is unique for each user and is linked to the account that is logged in
+- Added logic to adjust the amount of points available to bet depending on amount wagered
+- Updated the view picks page to only show the wagers made by the logged in user
+- Allowed users to tab between pools on the submit picks and view picks page
+- Fixed logic so user points are separate for each pool
+- Updated view picks frontend
 
 
 
