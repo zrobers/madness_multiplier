@@ -172,6 +172,15 @@ export async function createPool(req, res) {
       [pool.pool_id, owner.user_id]
     );
 
+    // Allocate initial credits to the pool owner
+    await query(
+      `INSERT INTO mm.transactions (pool_id, user_id, tx_type, amount_points, notes)
+       VALUES ($1::uuid, $2, 'INIT_CREDIT', $3, 'Initial pool credits for creator')`,
+      [pool.pool_id, owner.user_id, pool.initial_points]
+    );
+
+    console.log(`Created INIT_CREDIT transaction for pool creator: pool_id=${pool.pool_id}, user_id=${owner.user_id}, points=${pool.initial_points}`);
+
     return res.status(201).json({ pool, owner_handle: owner.handle });
   } catch (err) {
     console.error('createPool error', err);
@@ -226,11 +235,11 @@ export async function joinPool(req, res) {
     `;
     const insertRes = await query(insertSql, [id, dbUserId]);
     
-    // Check if user already has initial credits for this pool
+    // Check if user already has initial credits for this pool - cast pool_id to UUID
     const existingCredits = await query(
       `SELECT COUNT(*) as count 
        FROM mm.transactions 
-       WHERE pool_id = $1 AND user_id = $2 AND tx_type = 'INIT_CREDIT'`,
+       WHERE pool_id = $1::uuid AND user_id = $2 AND tx_type = 'INIT_CREDIT'`,
       [id, dbUserId]
     );
     

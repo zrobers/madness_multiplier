@@ -30,11 +30,11 @@ r.get("/balance", async (req, res) => {
       return res.status(400).json({ error: "poolId is required" });
     }
 
-    // Get user balance (sum of all transactions for this pool)
+    // Get user balance (sum of all transactions for this pool) - cast poolId to UUID
     const bal = await query(
       `SELECT COALESCE(SUM(amount_points), 0) as balance
        FROM mm.transactions
-       WHERE pool_id=$1 AND user_id=$2`,
+       WHERE pool_id = $1::uuid AND user_id = $2`,
       [poolId, dbUserId]
     );
 

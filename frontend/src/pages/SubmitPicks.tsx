@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 interface Game {
   game_id: number;
-  round_code: string;
+  round_code: number;
   region: string | null;
   game_no: number | null;
   start_time_utc: string;
@@ -27,32 +27,20 @@ interface WagerForm {
   amount: number;
 }
 
-const roundNames: Record<string, string> = {
-  'R64': 'Round of 64',
-  'R32': 'Round of 32',
-  'S16': 'Sweet 16',
-  'E8': 'Elite Eight',
-  'F4': 'Final Four',
-  'FINAL': 'Championship'
+const roundNames: Record<number, string> = {
+  '1': 'Round of 64',
+  '2': 'Round of 32',
+  '3': 'Sweet 16',
+  '4': 'Elite Eight',
+  '5': 'Final Four',
+  '6': 'Championship'
 };
 
-interface Pool {
-  pool_id: string;
-  name: string;
-  season_year: number;
-  initial_points: number;
-  unbet_penalty_pct: string;
-  allow_multi_bets: boolean;
-  created_at: string;
-  owner_user_id: string;
-  owner_handle: string;
-  owner_initials: string;
-}
 
 interface SubmitPicksProps {
   userId: string;
   userName?: string | null;
-  poolId?: string | null; 
+  poolId?: string | null;
 }
 
 export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksProps) {
@@ -62,26 +50,8 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
   const [success, setSuccess] = useState<string>('');
   const [userBalance, setUserBalance] = useState<number>(0);
   const [wagers, setWagers] = useState<WagerForm[]>([]);
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [poolsLoading, setPoolsLoading] = useState(true);
-  const [selectedPoolId, setSelectedPoolId] = useState<string>(poolId || '');
-
-  useEffect(() => {
-    fetchPools();
-  }, [userId]); // Re-fetch pools when userId changes
-
-  // Refresh pools when page becomes visible (user returns from joining a pool)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && userId) {
-        console.log('Page became visible, refreshing pools...');
-        fetchPools();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [userId]);
+  // Use poolId from props (passed from Home) instead of local state
+  const selectedPoolId = poolId || '';
 
   // Define fetchUserBalance before using it in useEffect
   const fetchUserBalance = useCallback(async () => {
@@ -114,64 +84,21 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
     }
   }, [selectedPoolId, userId]);
 
-  // Fetch balance whenever selectedPoolId or userId changes
-  useEffect(() => {
-    if (selectedPoolId && userId) {
-      fetchUserBalance();
-    } else {
-      setUserBalance(0);
-    }
-  }, [selectedPoolId, userId, fetchUserBalance]);
-
+  // Fetch balance and games whenever selectedPoolId changes
   useEffect(() => {
     if (selectedPoolId) {
       fetchGames();
+      fetchUserBalance();
       // Reset wagers when switching pools
       setWagers([]);
-    } else if (!poolsLoading && pools.length === 0) {
-      // If no pools available, still try to load some games for demo purposes
+    } else {
+      // If no pool selected, still try to load some games for demo purposes
       fetchGames();
     }
-  }, [selectedPoolId, poolsLoading, pools.length]);
+  }, [selectedPoolId]);
 
-  const fetchPools = async () => {
-    if (!userId) {
-      setPools([]);
-      setPoolsLoading(false);
-      return;
-    }
-    try {
-      setPoolsLoading(true);
-      console.log('Fetching pools for user:', userId);
-      const response = await fetch('http://localhost:4000/api/pools/user', {
-        headers: {
-          'X-User-Id': userId,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error(`Error fetching pools: ${response.statusText}`);
-      const data = await response.json();
-      console.log('Fetched pools:', data.pools?.length || 0);
-      setPools(data.pools || []);
-      
-      // If we have pools and no selected pool, or if selected pool is no longer in list, select first pool
-      if (data.pools && data.pools.length > 0) {
-        if (!selectedPoolId || !data.pools.find((p: Pool) => p.pool_id === selectedPoolId)) {
-          console.log('Setting selected pool to:', data.pools[0].pool_id);
-          setSelectedPoolId(data.pools[0].pool_id);
-        }
-      } else {
-        setSelectedPoolId('');
-      }
-    } catch (err: any) {
-      console.error('Error fetching pools:', err);
-      setPools([]); // Set empty pools array on error
-      setSelectedPoolId('');
-      // Don't set error here as it prevents the page from loading
-    } finally {
-      setPoolsLoading(false);
-    }
-  };
+
+  // Removed fetchPools - pool selection is handled by Home component
 
   const fetchGames = async () => {
     try {
@@ -449,6 +376,31 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
     }
   };
 
+
+  if (!selectedPoolId) {
+    return (
+      <div className="card">
+        <div className="cardTitle">Submit Your Picks</div>
+        <div className="warning-message">
+          Please select a pool from the dropdown at the top of the page to submit picks.
+        </div>
+      </div>
+    );
+  }
+
+  console.log('SubmitPicks render - loading:', loading, 'games:', games.length, 'error:', error);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="cardTitle">Loading games...</div>
+      </div>
+    );
+  }
+
+  // Calculate valid wagers for display
+  const validWagers = wagers.filter(w => w.teamId && w.amount > 0);
+
   const scheduledGames = games.filter(game => game.status === 'SCHEDULED');
   const gamesByRound = scheduledGames.reduce((acc, game) => {
     if (!acc[game.round_code]) acc[game.round_code] = [];
@@ -469,56 +421,6 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
   return (
     <div className="card">
         <div className="cardTitle">Submit Your Picks</div>
-
-        {/* Pool Selection */}
-        <div className="pool-selection" style={{ marginBottom: '16px' }}>
-          <label htmlFor="pool-select" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-            Select Pool:
-          </label>
-          {poolsLoading ? (
-            <div>Loading pools...</div>
-          ) : pools.length === 0 ? (
-            <div className="warning-message">No pools available. Please join a pool first from the Home page.</div>
-          ) : (
-            <select
-              id="pool-select"
-              value={selectedPoolId}
-              onChange={async (e) => {
-                const newPoolId = e.target.value;
-                console.log('Pool changed to:', newPoolId);
-                setSelectedPoolId(newPoolId);
-                // Reset wagers when switching pools
-                setWagers([]);
-                // Explicitly fetch balance for the new pool
-                // The useEffect will also trigger, but this ensures immediate update
-                if (newPoolId && userId) {
-                  try {
-                    const response = await axios.get(`http://localhost:4000/api/wagers/balance`, {
-                      params: { poolId: newPoolId },
-                      headers: {
-                        'X-User-Id': userId,
-                        'Content-Type': 'application/json'
-                      }
-                    });
-                    if (response.data && typeof response.data.balance === 'number') {
-                      console.log(`Immediate balance update for pool ${newPoolId}:`, response.data.balance);
-                      setUserBalance(response.data.balance);
-                    }
-                  } catch (err) {
-                    console.error('Error fetching balance on pool change:', err);
-                  }
-                }
-              }}
-              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
-            >
-              {pools.map((pool) => (
-                <option key={pool.pool_id} value={pool.pool_id}>
-                  {pool.name} ({pool.initial_points} pts)
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
 
         {error && error.includes('mock') && <div className="warning-message">{error}</div>}
         {error && !error.includes('mock') && <div className="error-message">{error}</div>}
@@ -541,9 +443,9 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
           </div>
         )}
 
-        {!selectedPoolId && pools.length > 0 && (
+        {!selectedPoolId && (
           <div className="warning-message">
-            Please select a pool above to view your balance and place wagers.
+            Please select a pool using the dropdown at the top of the page to submit picks.
           </div>
         )}
 
@@ -559,28 +461,28 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
 
         {Object.entries(gamesByRound).map(([roundCode, roundGames]) => (
           <div key={roundCode} className="round-section">
-            <h3 className="round-title">{roundNames[roundCode] || roundCode} ({roundGames.length} games)</h3>
-            
+            <h3 className="round-title">{roundNames[roundCode] || roundCode}</h3>
+
             <div className="games-grid">
               {roundGames.map((game) => {
                 const wager = wagers.find(w => w.gameId === game.game_id);
                 const expectedPayout = getExpectedPayout(game.game_id);
-                
+
                 return (
                   <div key={game.game_id} className="game-wager-card">
                     <div className="game-header">
                       <div className="game-time">
-                        {new Date(game.start_time_utc).toLocaleString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: 'numeric', 
+                        {new Date(game.start_time_utc).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
                           minute: '2-digit',
                           timeZoneName: 'short'
                         })}
                       </div>
                       <div className="game-region">{game.region || 'TBD'}</div>
                     </div>
-                    
+
                     <div className="teams-section">
                       <label className={`team-option ${wager?.teamId === game.team_a_id ? 'selected' : ''}`}>
                         <input
@@ -594,9 +496,9 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
                           <span className="name">{game.team_a_name}</span>
                         </div>
                       </label>
-                      
+
                       <div className="vs">VS</div>
-                      
+
                       <label className={`team-option ${wager?.teamId === game.team_b_id ? 'selected' : ''}`}>
                         <input
                           type="radio"
@@ -610,7 +512,7 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
                         </div>
                       </label>
                     </div>
-                    
+
                     <div className="wager-inputs">
                       <div className="amount-input">
                         <label>Wager Amount:</label>
@@ -624,7 +526,7 @@ export default function SubmitPicks({ userId, userName, poolId }: SubmitPicksPro
                           placeholder="0"
                         />
                       </div>
-                      
+
                       {wager?.teamId && wager.amount > 0 && (
                         <div className="payout-info">
                           <div className="odds">

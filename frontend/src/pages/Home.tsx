@@ -87,9 +87,10 @@ export default function HomePage() {
       console.log("loaded user pools", data.pools);
       setMyPools(data.pools || []);
 
-      if (data.pools?.length === 1) {
+      // Auto-select first pool if available
+      if (data.pools?.length > 0 && !selectedPoolId) {
         setSelectedPoolId(data.pools[0].pool_id);
-        setSelectedPoolName(data.pools[0].name); // backend returns name, not pool_name
+        setSelectedPoolName(data.pools[0].name);
       }
     }
 

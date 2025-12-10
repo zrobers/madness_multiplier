@@ -7,6 +7,7 @@ export async function getLeaderboard(req, res, next) {
       return res.status(400).json({ error: "poolId required" });
     }
 
+    // Cast poolId to UUID to ensure proper type matching
     const result = await query(
       `
       SELECT 
@@ -15,7 +16,7 @@ export async function getLeaderboard(req, res, next) {
         lb.initials,
         lb.current_points
       FROM mm.vw_pool_leaderboard lb
-      WHERE lb.pool_id = $1
+      WHERE lb.pool_id = $1::uuid
       ORDER BY lb.rank_in_pool ASC;
       `,
       [poolId]
