@@ -39,19 +39,14 @@ interface ViewPicksProps {
   poolId?: string | null;
 }
 
-export default function ViewPicks({ userId }: ViewPicksProps) {
+export default function ViewPicks({ userId, userName, poolId }: ViewPicksProps) {
   const [wagers, setWagers] = useState<Wager[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hasDemoData, setHasDemoData] = useState(false);
-
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [poolsLoading, setPoolsLoading] = useState(true);
-  const [selectedPoolId, setSelectedPoolId] = useState('');
-
-  useEffect(() => {
-    fetchPools();
-  }, []);
+  
+  // Use poolId from props (passed from Home) instead of local state
+  const selectedPoolId = poolId || '';
 
   useEffect(() => {
     if (selectedPoolId) {
@@ -59,32 +54,7 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
     }
   }, [selectedPoolId]);
 
-  const fetchPools = async () => {
-    try {
-      setPoolsLoading(true);
-      const response = await axios.get(
-        `http://localhost:4000/api/pools/user`,
-        {
-          headers: {
-            'X-User-Id': userId,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const ps = response.data.pools || [];
-      setPools(ps);
-
-      if (ps.length > 0 && !selectedPoolId) {
-        setSelectedPoolId(ps[0].pool_id);
-      }
-    } catch (err) {
-      console.error('Error fetching pools', err);
-      setPools([]);
-    } finally {
-      setPoolsLoading(false);
-    }
-  };
+  // Removed fetchPools - pool selection is handled by Home component
 
   const fetchWagers = async () => {
     try {
@@ -220,6 +190,16 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
       totalExpected: Math.round(totalExpected * 10) / 10,
     };
   }, [wagers]);
+  if (!selectedPoolId) {
+    return (
+      <div className="card">
+        <div className="cardTitle">Your Picks</div>
+        <div className="warning-message">
+          Please select a pool from the dropdown at the top of the page to view your picks.
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -233,38 +213,24 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
     <div className="card">
       <div className="cardTitle">Your Picks</div>
 
-      {/* POOL SELECT */}
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ fontWeight: '700' }}>Select Pool:</label>
-        {poolsLoading ? (
-          <div>Loading pools...</div>
-        ) : pools.length === 0 ? (
-          <div>No pools yet</div>
-        ) : (
-          <select
-            value={selectedPoolId}
-            onChange={(e) => setSelectedPoolId(e.target.value)}
-            style={{ marginLeft: 8 }}
-          >
-            {pools.map((p) => (
-              <option key={p.pool_id} value={p.pool_id}>
-                {p.name} ({p.initial_points} pts)
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
       {hasDemoData && (
-        <div style={{ marginBottom: 12 }}>
-          ⚠️ Some wagers are demo data.
-          <button onClick={clearDemoData} style={{ marginLeft: 12 }}>
+        <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span>⚠️</span>
+          <span>Some wagers are demo data for testing</span>
+          <button
+            onClick={clearDemoData}
+            style={{ marginLeft: 'auto', padding: '4px 8px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
             Clear Demo
           </button>
         </div>
       )}
 
-      {error && <div>{error}</div>}
+      {error && (
+        <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#fee2e2', border: '1px solid #dc2626', borderRadius: '6px', color: '#dc2626' }}>
+          {error}
+        </div>
+      )}
 
       {/* Analytics panel */}
       <div style={{ marginBottom: 12, display: 'flex', gap: 12 }}>
@@ -290,37 +256,100 @@ export default function ViewPicks({ userId }: ViewPicksProps) {
       </div>
 
       {wagers.length === 0 ? (
-        <div>You have no wagers in this pool.</div>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🎯</div>
+          <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>No wagers yet</h3>
+          <p style={{ margin: 0 }}>You haven't placed any wagers in this pool. Head to Submit Picks to get started!</p>
+        </div>
       ) : (
-        <div className="picks-list">
-          {wagers.map((w) => (
-            <div
-              key={w.wager_id}
-              className="pick-card"
-              style={
-                w.isDemoData
-                  ? { border: '2px solid #f59e0b', background: '#fffbeb' }
-                  : {}
-              }
-            >
-              <b>
-                #{w.picked_seed} {w.picked_team_name} vs #{w.opp_seed}{' '}
-                {w.opponent_team_name}
-              </b>
-              <div>
-                Stake {w.stake_points} @ {w.posted_odds}x
-              </div>
+        <div>
+          {/* Summary Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '15px', marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>{wagers.length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Wagers</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{wagers.filter(w => w.status === 'OPEN').length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>Active</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669' }}>{wagers.filter(w => w.status === 'WON').length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>Won</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>{wagers.filter(w => w.status === 'LOST').length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>Lost</div>
+            </div>
+          </div>
+
+          {/* Wagers List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {wagers.map((w) => (
               <div
+                key={w.wager_id}
                 style={{
-                  marginTop: 4,
-                  color: getColor(w.status),
-                  fontWeight: 600,
+                  padding: '15px',
+                  border: w.isDemoData ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  backgroundColor: w.isDemoData ? '#fffbeb' : '#ffffff'
                 }}
               >
-                {w.status}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ backgroundColor: '#e5e7eb', color: '#374151', padding: '2px 6px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                      #{w.picked_seed}
+                    </span>
+                    <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{w.picked_team_name}</span>
+                    <span style={{ color: '#6b7280' }}>vs</span>
+                    <span style={{ backgroundColor: '#e5e7eb', color: '#374151', padding: '2px 6px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                      #{w.opp_seed}
+                    </span>
+                    <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{w.opponent_team_name}</span>
+                  </div>
+
+                  <div style={{
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    backgroundColor:
+                      w.status === 'WON' ? '#dcfce7' :
+                      w.status === 'LOST' ? '#fee2e2' :
+                      w.status === 'OPEN' ? '#dbeafe' : '#f3f4f6',
+                    color:
+                      w.status === 'WON' ? '#166534' :
+                      w.status === 'LOST' ? '#dc2626' :
+                      w.status === 'OPEN' ? '#1d4ed8' : '#374151'
+                  }}>
+                    {w.status}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{ color: '#6b7280' }}>Stake: </span>
+                  <span style={{ fontWeight: 'bold' }}>{w.stake_points} points</span>
+                  <span style={{ margin: '0 10px', color: '#6b7280' }}>•</span>
+                  <span style={{ color: '#6b7280' }}>Odds: </span>
+                  <span style={{ fontWeight: 'bold' }}>{w.posted_odds}x</span>
+                  {w.expected_payout && (
+                    <>
+                      <span style={{ margin: '0 10px', color: '#6b7280' }}>•</span>
+                      <span style={{ color: '#059669', fontWeight: 'bold' }}>Expected: {w.expected_payout.toFixed(2)} pts</span>
+                    </>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#9ca3af' }}>
+                  <span>{new Date(w.placed_at).toLocaleDateString()} at {new Date(w.placed_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                  {w.isDemoData && (
+                    <span style={{ backgroundColor: '#f59e0b', color: 'white', padding: '2px 6px', borderRadius: '8px', fontSize: '10px' }}>Demo</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
