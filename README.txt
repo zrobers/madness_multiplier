@@ -1,3 +1,5 @@
+NOTE: The file was too large to submit to gradescope, so we submit just the README to Gradescope.
+
 Madness Multiplier
 Madness Multiplier is a database-backed web application that reimagines the excitement of March Madness through a structured, point-based wagering system.
 
